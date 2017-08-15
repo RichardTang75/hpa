@@ -228,6 +228,7 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
     bool success=false;
     while (success==false)
     {
+        std::cout<<depth<<"shit"<<"mierda\n";
         if (depth>0)
         {
             if (current.location==to)
@@ -416,22 +417,22 @@ node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tupl
         }
         std::vector<std::vector<int>> vec_from_container={from_left,from_right,from_top,from_bottom};
         std::vector<std::vector<int>> vec_my_container={my_left,my_right,my_top,my_bottom};
-        for (int i=0; i<vec_from_container.size(); ++i)
+        for (std::vector<int> costs: vec_of_terrain_costs)
         {
-            std::vector<int> myvec_comp=vec_my_container[i];
-            std::vector<int> fromvec_comp=vec_from_container[i];
-            if (fromvec_comp.size()==0)
+            std::vector<tuple_int> mod_pos_entrances;
+            mod_pos_entrances.clear();//just in case
+            std::vector<tuple_int> inter_edges;
+            inter_edges.clear();//see above
+            for (int i=0; i<vec_from_container.size(); ++i)
             {
-                continue;
-            }
-            for (std::vector<int> costs: vec_of_terrain_costs)
-            {
+                std::vector<int> myvec_comp=vec_my_container[i];
+                std::vector<int> fromvec_comp=vec_from_container[i];
+                if (fromvec_comp.size()==0)
+                {
+                    std::cout<<"\nmierda";
+                    continue;
+                }
                 std::vector<tuple_int> possible_entrances=cheapest(costs,myvec_comp,fromvec_comp);
-                std::vector<tuple_int> mod_pos_entrances;
-                mod_pos_entrances.clear();//just in case
-                std::vector<tuple_int> inter_edges;
-                inter_edges.clear();//see above
-                mod_pos_entrances.reserve(possible_entrances.size());
                 int half_coord;
                 int inter_edge_half;
                 if (myvec_comp==from_left or myvec_comp==from_right)
@@ -528,10 +529,10 @@ node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tupl
                                 //                                temp_edge_key.to=coord_to;
                                 //                                temp_edge_key.t_mobility=costs;
                                 //                                graph_edges[temp_edge_key]=temp_edge;
-                                graph_nodes[temp_node_key]=temp_node;
                             }
                         }
                     }
+                    graph_nodes[temp_node_key]=temp_node;
                     nodes_in_this_section.push_back(temp_node);
                 }
                 local_node_key temp_local_key;
