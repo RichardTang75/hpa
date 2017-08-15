@@ -458,16 +458,19 @@ node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tupl
                 {
                     if (myvec_comp==from_top)
                     {
-                        half_coord=0;
+                        half_coord=std::get<1>(which)*cut_size;
+                        inter_edge_half=(std::get<1>(which)*cut_size)-1;
                     }
                     else if(myvec_comp==from_bottom)
                     {
-                        half_coord=(from_bottom.size()-1);
-                    }
+                        half_coord=(from_bottom.size()-1)+(std::get<1>(which)*cut_size);
+                        inter_edge_half=from_bottom.size()+(std::get<1>(which)*cut_size);                        }
                     for (tuple_int half:possible_entrances)
                     {
-                        int my_side=std::get<0>(half);
+                        int my_side=std::get<0>(half)+(std::get<0>(which)*cut_size);
+                        int inter_edge_side=std::get<1>(half)+(std::get<0>(which)*cut_size);
                         mod_pos_entrances.push_back(tuple_int(half_coord,my_side));
+                        inter_edges.push_back(tuple_int(inter_edge_half,inter_edge_side));
                     }
                 }
                 for (int i_from=0; i_from<mod_pos_entrances.size(); ++i_from)
@@ -520,11 +523,11 @@ node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tupl
                                 }
                                 temp_edge.cost=total_cost;
                                 temp_node.associated_edges.push_back(temp_edge);
-//                                pf_edge_key temp_edge_key;
-//                                temp_edge_key.from=coord_from;
-//                                temp_edge_key.to=coord_to;
-//                                temp_edge_key.t_mobility=costs;
-//                                graph_edges[temp_edge_key]=temp_edge;
+                                //                                pf_edge_key temp_edge_key;
+                                //                                temp_edge_key.from=coord_from;
+                                //                                temp_edge_key.to=coord_to;
+                                //                                temp_edge_key.t_mobility=costs;
+                                //                                graph_edges[temp_edge_key]=temp_edge;
                                 graph_nodes[temp_node_key]=temp_node;
                             }
                         }
@@ -578,7 +581,7 @@ path_with_cost hierarchical_pathfind(tuple_int& to, tuple_int& from,std::vector<
     path_with_cost to_add;
     pf_node closest;
     pf_node previous;
-    int deepest_depth;
+    int deepest_depth=0;
     for (int i=1; i<=max_depth; ++i)
     {
         closest=closest_pf_node(to,from,mapset[which_map(to,i)],i,movecosts,all_local_nodes);
