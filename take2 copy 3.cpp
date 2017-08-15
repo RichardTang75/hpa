@@ -62,7 +62,7 @@ private:
     int width;
     int height;
     SDL_Texture* f_texture=NULL;
-    SDL_Surface* t_surf=IMG_Load("/Users/asdfuiop/Desktop/untitled folder/take2/take2/empty.png");
+    SDL_Surface* t_surf=IMG_Load("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/empty.png");
 };
 back_text::back_text(int set_width, int set_height)
 {
@@ -112,7 +112,7 @@ int back_text::get_width()
 void back_text::surface_processing(std::string path, tuple_set& to_add, std::string features,int seed,float hurdle)
 {
     SDL_Surface* initial=IMG_Load(path.c_str());
-    SDL_Surface* temp=IMG_Load("/Users/asdfuiop/Desktop/untitled folder/take2/take2/empty.png");
+    SDL_Surface* temp=IMG_Load("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/empty.png");
     Uint32* srcpixels=(Uint32*)initial->pixels;
     if(SDL_MUSTLOCK(temp))
     {
@@ -279,7 +279,7 @@ std::tuple<std::vector<tuple_set>,vectormap> map_controller
     unsigned error = lodepng::encode(png,image,rows,cols,state);
     if (!error)
     {
-        lodepng::save_file(png,"/Users/asdfuiop/Desktop/untitled folder/take2/take2/cplusplus.png");
+        lodepng::save_file(png,"/Users/asdfuiop/Desktop/xcodestuff/take2/take2/cplusplus.png");
     }
     else
     {
@@ -288,7 +288,7 @@ std::tuple<std::vector<tuple_set>,vectormap> map_controller
     unsigned nerror = lodepng::encode(png2,wallimage,rows,cols,state2);
     if (!nerror)
     {
-        lodepng::save_file(png2,"/Users/asdfuiop/Desktop/untitled folder/take2/take2/cplusplus2.png");
+        lodepng::save_file(png2,"/Users/asdfuiop/Desktop/xcodestuff/take2/take2/cplusplus2.png");
     }
     else
     {
@@ -366,12 +366,12 @@ int main(int argc, char* argv[])
     mount=temp_map[1];
     water=temp_map[2];
     marsh=temp_map[3];
-    grass.simple_load("/Users/asdfuiop/Desktop/untitled folder/take2/take2/grass1t.png");
+    grass.simple_load("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/grass1t.png");
     grass.make_text();
-    back.surface_processing("/Users/asdfuiop/Desktop/untitled folder/take2/take2/marsh1t.png",marsh);
-    back.surface_processing("/Users/asdfuiop/Desktop/untitled folder/take2/take2/forest1t.png",forest);
-    back.surface_processing("/Users/asdfuiop/Desktop/untitled folder/take2/take2/mount1t.png",mount);
-    back.surface_processing("/Users/asdfuiop/Desktop/untitled folder/take2/take2/water1t.png",water);
+    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/marsh1t.png",marsh);
+    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/forest1t.png",forest);
+    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/mount1t.png",mount);
+    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/water1t.png",water);
     back.make_text();
     bool quit=false;
     SDL_Event e;
@@ -393,8 +393,19 @@ int main(int argc, char* argv[])
     path_with_cost path_and_cost=hierarchical_pathfind(end, start, basic, map_set, 1, nodes);
     std::cout<<map_set.size()<<"\n"<<nodes.local_nodes.size()<<"\n"<<nodes.all_nodes.size()<<"\n";
     std::cout<<path_and_cost.size();
+    int count=0;
+    for (auto pair : nodes.all_nodes)
+    {
+        pf_node nodey=pair.second;
+        std::cout<<"\n"<<std::get<0>(nodey.location)<<","<<std::get<1>(nodey.location)<<","<<nodey.associated_edges.size();
+    }
     for (int i=0; i<path_and_cost.size();i++)
     {
+        if (count>1000)
+        {
+            break;
+        }
+        ++count;
         int x=std::get<0>(std::get<0>(path_and_cost[i]));
         int y=std::get<1>(std::get<0>(path_and_cost[i]));
         std::cout<<x<<","<<y<<","<<std::get<1>(path_and_cost[i])<<"\n";
