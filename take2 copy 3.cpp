@@ -16,8 +16,10 @@
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
 #include "terrain.hpp"
-#include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
+//#include <SDL2/SDL.h>
+//#include <SDL2_image/SDL_image.h>
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
 std::vector<std::vector<int>> possible_move_costs=
 {
@@ -55,7 +57,7 @@ private:
     int width;
     int height;
     SDL_Texture* f_texture=NULL;
-    SDL_Surface* t_surf=IMG_Load("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/empty.png");
+    SDL_Surface* t_surf=IMG_Load("empty.png");
 };
 back_text::back_text(int set_width, int set_height)
 {
@@ -105,7 +107,7 @@ int back_text::get_width()
 void back_text::surface_processing(std::string path, tuple_set& to_add, std::string features,int seed,float hurdle)
 {
     SDL_Surface* initial=IMG_Load(path.c_str());
-    SDL_Surface* temp=IMG_Load("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/empty.png");
+    SDL_Surface* temp=IMG_Load("empty.png");
     Uint32* srcpixels=(Uint32*)initial->pixels;
     if(SDL_MUSTLOCK(temp))
     {
@@ -272,7 +274,7 @@ std::tuple<std::vector<tuple_set>,vectormap> map_controller
     unsigned error = lodepng::encode(png,image,rows,cols,state);
     if (!error)
     {
-        lodepng::save_file(png,"/Users/asdfuiop/Desktop/xcodestuff/take2/take2/cplusplus.png");
+        lodepng::save_file(png,"cplusplus.png");
     }
     else
     {
@@ -281,7 +283,7 @@ std::tuple<std::vector<tuple_set>,vectormap> map_controller
     unsigned nerror = lodepng::encode(png2,wallimage,rows,cols,state2);
     if (!nerror)
     {
-        lodepng::save_file(png2,"/Users/asdfuiop/Desktop/xcodestuff/take2/take2/cplusplus2.png");
+        lodepng::save_file(png2,"cplusplus2.png");
     }
     else
     {
@@ -351,7 +353,8 @@ int main(int argc, char* argv[])
     vectormap map=std::get<1>(sets_map);
     int cut_size=8;
     std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> map_set=cut(map, 0, 0, cut_size);
-    node_retrieval nodes=entrances(map_set, false, 0, 0, width/cut_size, height/cut_size, possible_move_costs);
+	std::cout << "\n" << map_set.size() << "," << map_set[tuple_int(0, 0)].size() << "," << map_set[tuple_int(0, 0)][0].size();
+    node_retrieval nodes=entrances(map_set, map, false, 0, 0, width/cut_size, height/cut_size, possible_move_costs);
     back_text back(512,512);
     back_text grass(512,512);
     tuple_set forest,mount,water,marsh,N,E,S,W;
@@ -359,12 +362,12 @@ int main(int argc, char* argv[])
     mount=temp_map[1];
     water=temp_map[2];
     marsh=temp_map[3];
-    grass.simple_load("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/grass1t.png");
+    grass.simple_load("grass1t.png");
     grass.make_text();
-    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/marsh1t.png",marsh);
-    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/forest1t.png",forest);
-    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/mount1t.png",mount);
-    back.surface_processing("/Users/asdfuiop/Desktop/xcodestuff/take2/take2/water1t.png",water);
+    back.surface_processing("marsh1t.png",marsh);
+    back.surface_processing("forest1t.png",forest);
+    back.surface_processing("mount1t.png",mount);
+    back.surface_processing("water1t.png",water);
     back.make_text();
     bool quit=false;
     SDL_Event e;
@@ -429,5 +432,6 @@ int main(int argc, char* argv[])
         }
         SDL_Delay(10);
     }
+	return 0;
 }
 

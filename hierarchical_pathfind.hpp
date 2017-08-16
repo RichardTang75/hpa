@@ -15,7 +15,8 @@ std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> cut(vectormap& to
 path_with_cost hierarchical_pathfind(tuple_int& to, tuple_int& from,std::vector<int>& movecosts,
                                       std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>>& mapset,
                                       int max_depth, node_retrieval& every_node_map);
-node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>>& map_set,
-                          bool wrap, int min_x, int min_y, int max_x, int max_y,
-                         std::vector<std::vector<int>>& vec_of_terrain_costs);
+node_retrieval entrances(std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& map_set,
+						vectormap& big_map,
+						bool wrap, int min_x, int min_y, int max_x, int max_y,
+						std::vector<std::vector<int>>& vec_of_terrain_costs);
 #endif /* hierarchical_pathfind_hpp */

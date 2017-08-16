@@ -8,6 +8,7 @@
 
 #include "pathfinding.hpp"
 #include "goodfunctions.hpp"
+#include <iostream>
 
 struct queue_item
 {
@@ -51,13 +52,15 @@ inline queue_item determine_queue (vectormap& map, tuple_int& current,tuple_int&
     return to_return;
 }
 
-std::vector<std::tuple<tuple_int,float>> a_pathfind_controller(vectormap& map, tuple_int& from, tuple_int& to,
-                                                               std::vector<int>& terrain_costs)
+std::vector<std::tuple<tuple_int, float>> a_pathfind_controller(vectormap& map, tuple_int& from, tuple_int& to,
+																std::vector<int>& terrain_costs, int offsetX = 0, int offsetY=0, 
+																int wrap=0, int seamless=0)
 {
     std::priority_queue<queue_item,std::vector<queue_item>,distcomp> openlist;
     std::unordered_set<tuple_int,boost::hash<tuple_int>> open_dups;
     tuple_set closedlist;
     std::vector<std::tuple<tuple_int,float>> to_return;
+
     std::vector<tuple_int> diag_directions=
     {
         tuple_int(-1,-1),tuple_int(-1,1),tuple_int(1,-1),tuple_int(1,1),
@@ -66,7 +69,18 @@ std::vector<std::tuple<tuple_int,float>> a_pathfind_controller(vectormap& map, t
     {
         tuple_int(-1,0),tuple_int(0,-1),tuple_int(0,1),tuple_int(1,0)
     };
-    tuple_int current=from;
+	int start_x = std::get<0>(from) - offsetX;
+	int start_y = std::get<1>(from) - offsetY;
+	int end_x = std::get<0>(to) - offsetX;
+	int end_y = std::get<1>(to) - offsetY;
+	tuple_int mod_start = tuple_int(start_x, start_y);
+	tuple_int mod_end = tuple_int(end_x, end_y);
+	tuple_int current = mod_start;
+	if (terrain_costs[(map[std::get<1>(mod_start)][std::get<0>(mod_start)])] == 0 or 
+		(terrain_costs[(map[std::get<1>(mod_end)][std::get<0>(mod_end)])] == 0))
+	{
+		return to_return;
+	}
     queue_item temp;
     std::unordered_map<tuple_int,std::tuple<tuple_int,float>,boost::hash<tuple_int>> visits;
     bool success=false;
@@ -74,7 +88,7 @@ std::vector<std::tuple<tuple_int,float>> a_pathfind_controller(vectormap& map, t
     bool diag;
     while (success==false)
     {
-        if (current==to)
+        if (current==mod_end)
         {
             success=true;
         }
@@ -145,18 +159,24 @@ std::vector<std::tuple<tuple_int,float>> a_pathfind_controller(vectormap& map, t
             }
         }
     }
-    std::tuple<tuple_int,float> coord_came_and_cost=visits[to];
+    std::tuple<tuple_int,float> coord_came_and_cost=visits[mod_end];
     tuple_int path=std::get<0>(coord_came_and_cost);
     to_return.reserve(int(calc_cost(from,to)));
     //cost that is added is for going from one step to the next one. at the end there is no need for a cost.
     //further additions can be done by other functions. probably.
     to_return.push_back(std::make_tuple(to,0));
+	int mod_path_x = std::get<0>(path) + offsetX;
+	int mod_path_y = std::get<1>(path) + offsetY;
+	tuple_int mod_path = tuple_int(mod_path_x, mod_path_y);
     to_return.push_back(std::make_tuple(path,std::get<1>(coord_came_and_cost)));
-    while (path != from)
+    while (path != mod_start)
     {
         coord_came_and_cost=visits[path];
         path=std::get<0>(coord_came_and_cost);
-        to_return.push_back(std::make_tuple(path,std::get<1>(coord_came_and_cost)));
+		int mod_path_x = std::get<0>(path)+offsetX;
+		int mod_path_y = std::get<1>(path)+offsetY;
+		tuple_int mod_path = tuple_int(mod_path_x, mod_path_y);
+        to_return.push_back(std::make_tuple(mod_path,std::get<1>(coord_came_and_cost)));
     }
     return to_return;
 }

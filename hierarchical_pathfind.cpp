@@ -118,16 +118,20 @@ std::vector<int> get_edge(vectormap& current, where which_one, bool& mine)
 //the first one and second one should give the same value, but it'd be a pain to pass it on. therefore each one does it themselves.
 //returns place in vector to cross.
 //interedges
-std::vector<tuple_int> cheapest(std::vector<int>& vec_terrain_costs, std::vector<int>& mine, std::vector<int>& other)
+std::vector<std::tuple<int,int,int>> cheapest(std::vector<int>& vec_terrain_costs, std::vector<int>& mine, std::vector<int>& other)
 {
     int bestcost=90; //this is a massive move cost that would never be seen. probably should've used -1, but w/e
     int currentcost;
-    std::vector<tuple_int> best;
-    std::vector<tuple_int> to_return;
+    std::vector<std::tuple<int, int, int>> best;
+    std::vector<std::tuple<int, int, int>> to_return;
     for (int j=0; j<mine.size(); ++j)
     {
         for (int checks=-1; checks<2; ++checks)
         {
+			if (vec_terrain_costs[mine[j]] == 0 or ((checks+j)<other.size() and vec_terrain_costs[other[checks + j]] == 0))
+			{
+				continue;
+			}
             if (checks+j>0 && (checks+j)<other.size())
             {
                 if (checks==0)
@@ -137,11 +141,11 @@ std::vector<tuple_int> cheapest(std::vector<int>& vec_terrain_costs, std::vector
                     {
                         bestcost=currentcost;
                         best.clear();
-                        best.push_back(tuple_int(j,checks+j));
+                        best.push_back(std::tuple<int, int, int>(j,checks+j,bestcost));
                     }
                     else if (currentcost==bestcost)
                     {
-                        best.push_back(tuple_int(j,checks+j));
+                        best.push_back(std::tuple<int, int, int>(j, checks + j, bestcost));
                     }
                 }
                 else
@@ -151,11 +155,11 @@ std::vector<tuple_int> cheapest(std::vector<int>& vec_terrain_costs, std::vector
                     {
                         bestcost=currentcost;
                         best.clear();
-                        best.push_back(tuple_int(j,checks+j));
+                        best.push_back(std::tuple<int, int, int>(j, checks + j, bestcost));
                     }
                     else if (currentcost==bestcost)
                     {
-                        best.push_back(tuple_int(j,checks+j));
+                        best.push_back(std::tuple<int, int, int>(j, checks + j, bestcost));
                     }
                 }
             }
@@ -176,6 +180,7 @@ std::vector<tuple_int> cheapest(std::vector<int>& vec_terrain_costs, std::vector
         {
             index=best.size()/2;
             to_return.push_back(best[index]);
+			return to_return;
         }
     }
     return best;
@@ -185,9 +190,9 @@ std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> cut(vectormap& to
                                                                    int y_begin, int cut_size)
 //to_return.
 {
-    std::vector<int> row(to_cut[0].size()/cut_size);
-    std::vector<int> temprow(to_cut[0].size()/cut_size);
-    vectormap tempmap((to_cut.size()/cut_size),row);
+    std::vector<int> row(cut_size);
+    std::vector<int> temprow(cut_size);
+    vectormap tempmap(cut_size,row);
     std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> to_return;
     for (int ystart=y_begin; ystart<(y_begin+to_cut.size()); ystart+=cut_size){
         for (int xstart=x_begin; xstart<(to_cut[0].size()+x_begin); xstart+=cut_size)
@@ -331,6 +336,7 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
 //}
 
 node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>>& map_set,
+						 vectormap& big_map,
                          bool wrap, int min_x, int min_y, int max_x, int max_y,
                          std::vector<std::vector<int>>& vec_of_terrain_costs)
 {
@@ -354,6 +360,7 @@ node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tupl
     for (auto which_map:map_set)
     {
         which=which_map.first;
+		std::cout << "\n"<<std::get<0>(which) <<","<< std::get<1>(which);
         current_map=which_map.second;
         std::vector<int> from_left,from_right,from_top,from_bottom;
         std::vector<int> my_left,my_right,my_top,my_bottom;
@@ -422,126 +429,131 @@ node_retrieval entrances(std::unordered_map<tuple_int,vectormap,boost::hash<tupl
             std::vector<tuple_int> mod_pos_entrances;
             mod_pos_entrances.clear();//just in case
             std::vector<tuple_int> inter_edges;
-            inter_edges.clear();//see above
-            for (int i=0; i<vec_from_container.size(); ++i)
+			inter_edges.clear();//see above
+			std::vector<int> travel_cost;
+			travel_cost.clear();
+			for (int i = 0; i < vec_from_container.size(); ++i)
+			{
+				std::vector<int> myvec_comp = vec_my_container[i];
+				std::vector<int> fromvec_comp = vec_from_container[i];
+				if (fromvec_comp.size() == 0)
+				{
+					std::cout << "\nmierda";
+					continue;
+				}
+				std::vector<std::tuple<int, int, int>> possible_entrances = cheapest(costs, myvec_comp, fromvec_comp);
+				//1st-mine, 2nd-theirs, 3rd-cost, didn't feel like a struct.
+				int half_coord;
+				int inter_edge_half;
+				if (i==0 or i==1)
+				{
+					if (i==0) //from_left because it didn't work the other way
+					{
+						half_coord = std::get<0>(which)*cut_size;
+						inter_edge_half = (std::get<0>(which)*cut_size) - 1;
+					}
+					else if (i==1) //from_right
+					{
+						half_coord = (from_right.size() - 1) + (std::get<0>(which)*cut_size);
+						inter_edge_half = from_right.size() + (std::get<0>(which)*cut_size);
+					}
+					for (std::tuple<int, int, int> half : possible_entrances)
+					{
+						int my_side = std::get<0>(half) + (std::get<1>(which)*cut_size);
+						int inter_edge_side = std::get<1>(half) + (std::get<1>(which)*cut_size);
+						mod_pos_entrances.push_back(tuple_int(half_coord, my_side));
+						inter_edges.push_back(tuple_int(inter_edge_half, inter_edge_side));
+						travel_cost.push_back(std::get<2>(half));
+					}
+				}
+				else
+				{
+					if (i==2) //from_top
+					{
+						half_coord = std::get<1>(which)*cut_size;
+						inter_edge_half = (std::get<1>(which)*cut_size) - 1;
+					}
+					else if (i==3) //from_bottom
+					{
+						half_coord = (from_bottom.size() - 1) + (std::get<1>(which)*cut_size);
+						inter_edge_half = from_bottom.size() + (std::get<1>(which)*cut_size);
+					}
+					for (std::tuple<int, int, int> half : possible_entrances)
+					{
+						int my_side = std::get<0>(half) + (std::get<0>(which)*cut_size);
+						int inter_edge_side = std::get<1>(half) + (std::get<0>(which)*cut_size);
+						mod_pos_entrances.push_back(tuple_int(my_side,half_coord));
+						inter_edges.push_back(tuple_int(inter_edge_side, inter_edge_half));
+						travel_cost.push_back(std::get<2>(half));
+					}
+				}
+			}
+            for (int i_from=0; i_from<mod_pos_entrances.size(); ++i_from)
             {
-                std::vector<int> myvec_comp=vec_my_container[i];
-                std::vector<int> fromvec_comp=vec_from_container[i];
-                if (fromvec_comp.size()==0)
+                tuple_int coord_from=mod_pos_entrances[i_from];
+				std::unordered_set<tuple_int, boost::hash<tuple_int>> alreadyhit;
+                //form a node first
+                //then build the edges
+                pf_node temp_node;
+                pf_node_key temp_node_key;
+                //shit need to convert back to global
+                temp_node.location=mod_pos_entrances[i_from];
+                temp_node_key.location=temp_node.location;
+                temp_node.depth=depth;
+                temp_node_key.depth=depth;
+                temp_node.t_mobility=costs;
+                temp_node_key.t_mobility=costs;
+                pf_edge inter_edge;
+                inter_edge.key_to.depth=depth;
+                inter_edge.key_to.location=inter_edges[i_from];
+                inter_edge.key_to.t_mobility=costs;
+				inter_edge.cost = travel_cost[i_from];
+				inter_edge.path = { { std::tuple<tuple_int, int>(inter_edges[i_from], 0) },
+									{ std::tuple<tuple_int, int>(temp_node.location, inter_edge.cost)} };
+                path_with_cost empty_path;
+                temp_node.associated_edges.clear(); //gotta be safe.
+                temp_node.associated_edges.push_back(inter_edge);
+                for(int i_to=0; i_to<mod_pos_entrances.size();++i_to)
                 {
-                    std::cout<<"\nmierda";
-                    continue;
-                }
-                std::vector<tuple_int> possible_entrances=cheapest(costs,myvec_comp,fromvec_comp);
-                int half_coord;
-                int inter_edge_half;
-                if (myvec_comp==from_left or myvec_comp==from_right)
-                {
-                    if (myvec_comp==from_left)
+                    tuple_int coord_to=mod_pos_entrances[i_to];
+                    if (coord_from != coord_to)
                     {
-                        half_coord=std::get<0>(which)*cut_size;
-                        inter_edge_half=(std::get<0>(which)*cut_size)-1;
-                    }
-                    else if(myvec_comp==from_right)
-                    {
-                        half_coord=(from_right.size()-1)+(std::get<0>(which)*cut_size);
-                        inter_edge_half=from_right.size()+(std::get<0>(which)*cut_size);
-                    }
-                    for (tuple_int half:possible_entrances)
-                    {
-                        int my_side=std::get<0>(half)+(std::get<1>(which)*cut_size);
-                        int inter_edge_side=std::get<1>(half)+(std::get<1>(which)*cut_size);
-                        mod_pos_entrances.push_back(tuple_int(half_coord,my_side));
-                        inter_edges.push_back(tuple_int(inter_edge_half,inter_edge_side));
-                    }
-                }
-                else
-                {
-                    if (myvec_comp==from_top)
-                    {
-                        half_coord=std::get<1>(which)*cut_size;
-                        inter_edge_half=(std::get<1>(which)*cut_size)-1;
-                    }
-                    else if(myvec_comp==from_bottom)
-                    {
-                        half_coord=(from_bottom.size()-1)+(std::get<1>(which)*cut_size);
-                        inter_edge_half=from_bottom.size()+(std::get<1>(which)*cut_size);                        }
-                    for (tuple_int half:possible_entrances)
-                    {
-                        int my_side=std::get<0>(half)+(std::get<0>(which)*cut_size);
-                        int inter_edge_side=std::get<1>(half)+(std::get<0>(which)*cut_size);
-                        mod_pos_entrances.push_back(tuple_int(half_coord,my_side));
-                        inter_edges.push_back(tuple_int(inter_edge_half,inter_edge_side));
-                    }
-                }
-                for (int i_from=0; i_from<mod_pos_entrances.size(); ++i_from)
-                {
-                    tuple_int coord_from=mod_pos_entrances[i_from];
-                    //form a node first
-                    //then build the edges
-                    pf_node temp_node;
-                    pf_node_key temp_node_key;
-                    //shit need to convert back to global
-                    temp_node.location=mod_pos_entrances[i_from];
-                    temp_node_key.location=temp_node.location;
-                    temp_node.depth=depth;
-                    temp_node_key.depth=depth;
-                    temp_node.t_mobility=costs;
-                    temp_node_key.t_mobility=costs;
-                    pf_edge inter_edge;
-                    inter_edge.key_to.depth=depth;
-                    inter_edge.key_to.location=inter_edges[i_from];
-                    inter_edge.key_to.t_mobility=costs;
-                    inter_edge.path=a_pathfind_controller(current_map,coord_from,inter_edges[i_from],costs);
-                    path_with_cost empty_path;
-                    float total_cost=0;
-                    if (inter_edge.path!=empty_path)
-                    {
-                        for (std::tuple<tuple_int,float> tile:inter_edge.path)
+                        pf_edge temp_edge;
+                        float total_cost=0;
+                        temp_edge.key_to.depth=depth;
+                        temp_edge.key_to.location=coord_to;
+                        temp_edge.key_to.t_mobility=costs;
+						//std::cout << "\n" << std::get<0>(coord_from) << "," << std::get<1>(coord_from) << "     " << std::get<0>(coord_to) << "," << std::get<1>(coord_to);
+                        temp_edge.path=a_pathfind_controller(current_map,coord_from,coord_to,costs,std::get<0>(which)*cut_size, std::get<1>(which)*cut_size);
+                        if (temp_edge.path!=empty_path)
                         {
-                            total_cost+=std::get<1>(tile);
-                        }
-                    }
-                    inter_edge.cost=total_cost;
-                    temp_node.associated_edges.clear(); //gotta be safe.
-                    temp_node.associated_edges.push_back(inter_edge);
-                    for(int i_to=0; i_to<mod_pos_entrances.size();++i_to)
-                    {
-                        tuple_int coord_to=mod_pos_entrances[i_to];
-                        if (coord_from != coord_to)
-                        {
-                            pf_edge temp_edge;
-                            float total_cost=0;
-                            temp_edge.key_to.depth=depth;
-                            temp_edge.key_to.location=coord_to;
-                            temp_edge.key_to.t_mobility=costs;
-                            temp_edge.path=a_pathfind_controller(current_map,coord_from,coord_to,costs);
-                            if (temp_edge.path!=empty_path)
+                            for (std::tuple<tuple_int,float> tile:temp_edge.path)
                             {
-                                for (std::tuple<tuple_int,float> tile:temp_edge.path)
-                                {
-                                    total_cost+=std::get<1>(tile);
-                                }
-                                temp_edge.cost=total_cost;
-                                temp_node.associated_edges.push_back(temp_edge);
-                                //                                pf_edge_key temp_edge_key;
-                                //                                temp_edge_key.from=coord_from;
-                                //                                temp_edge_key.to=coord_to;
-                                //                                temp_edge_key.t_mobility=costs;
-                                //                                graph_edges[temp_edge_key]=temp_edge;
+                                total_cost+=std::get<1>(tile);
                             }
+                            temp_edge.cost=total_cost;
+                            temp_node.associated_edges.push_back(temp_edge);
+                            //                                pf_edge_key temp_edge_key;
+                            //                                temp_edge_key.from=coord_from;
+                            //                                temp_edge_key.to=coord_to;
+                            //                                temp_edge_key.t_mobility=costs;
+                            //                                graph_edges[temp_edge_key]=temp_edge;
                         }
+						else
+						{
+							continue;
+						}
                     }
-                    graph_nodes[temp_node_key]=temp_node;
-                    nodes_in_this_section.push_back(temp_node);
                 }
-                local_node_key temp_local_key;
-                temp_local_key.map_coord=which;
-                temp_local_key.depth=depth;
-                temp_local_key.t_mobility=costs;
-                nodes_in_map[temp_local_key]=nodes_in_this_section;
-                nodes_in_this_section.clear();
+                graph_nodes[temp_node_key]=temp_node;
+                nodes_in_this_section.push_back(temp_node);
             }
+            local_node_key temp_local_key;
+            temp_local_key.map_coord=which;
+            temp_local_key.depth=depth;
+            temp_local_key.t_mobility=costs;
+            nodes_in_map[temp_local_key]=nodes_in_this_section;
+            nodes_in_this_section.clear();
         }
     }
     to_return.local_nodes=nodes_in_map;
