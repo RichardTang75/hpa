@@ -90,6 +90,7 @@ struct pf_node
 };
 struct node_retrieval{
     std::unordered_map<pf_node_key,pf_node,pf_node_key::hash> all_nodes;
-    std::unordered_map<local_node_key,std::vector<pf_node>,local_node_key::hash> local_nodes;
+    std::unordered_map<local_node_key,std::vector<pf_node_key>,local_node_key::hash> local_nodes;  
+	/*local_nodes can store either pf_node pointers or pf_node_keys. pointers are cheapers, but they'd be harder to serialize...probably?*/
 };
 #endif /* pathfinding_hpp */

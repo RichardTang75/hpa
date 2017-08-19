@@ -351,10 +351,10 @@ int main(int argc, char* argv[])
     sets_map=map_controller(512,512,24,empty,empty,empty,empty);
     std::vector<tuple_set> temp_map=std::get<0>(sets_map);
     vectormap map=std::get<1>(sets_map);
-    int cut_size=8;
+    int cut_size=64;
     std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> map_set=cut(map, 0, 0, cut_size);
 	std::cout << "\n" << map_set.size() << "," << map_set[tuple_int(0, 0)].size() << "," << map_set[tuple_int(0, 0)][0].size();
-    node_retrieval nodes=entrances(map_set, map, false, 0, 0, width/cut_size, height/cut_size, possible_move_costs);
+    node_retrieval nodes=entrances(map_set, map, cut_size, false, 0, 0, width/cut_size, height/cut_size, possible_move_costs);
     back_text back(512,512);
     back_text grass(512,512);
     tuple_set forest,mount,water,marsh,N,E,S,W;
@@ -383,18 +383,14 @@ int main(int argc, char* argv[])
     SDL_SetRenderDrawColor(grenderer, 0xFF, 0x00, 0x00, 0xFF);
     SDL_RenderFillRect(grenderer, &sizer2);
     //
+	std::cout << "done";
     tuple_int start=tuple_int(10,10);
     tuple_int end=tuple_int(510,510);
     std::vector<int> basic={1,2,3,4,0};
-    path_with_cost path_and_cost=hierarchical_pathfind(end, start, basic, map_set, 1, nodes);
+    path_with_cost path_and_cost=hierarchical_pathfind(end, start, basic, map_set, 1, cut_size, nodes);
     std::cout<<map_set.size()<<"\n"<<nodes.local_nodes.size()<<"\n"<<nodes.all_nodes.size()<<"\n";
     std::cout<<path_and_cost.size();
     int count=0;
-    for (auto pair : nodes.all_nodes)
-    {
-        pf_node nodey=pair.second;
-        std::cout<<"\n"<<std::get<0>(nodey.location)<<","<<std::get<1>(nodey.location)<<","<<nodey.associated_edges.size();
-    }
     for (int i=0; i<path_and_cost.size();i++)
     {
         if (count>1000)
