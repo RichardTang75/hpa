@@ -253,10 +253,13 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
                 to_return=pf_node_pathfind(new_start,to,base_map_set,all_nodes,cut_size,(new_depth));
             }
             else if(open_list.size()==0){
+				std::cout << current.associated_edges.size();
                 for (int edge_i=0; edge_i<current.associated_edges.size(); ++edge_i)
                 {
                     pf_edge waypoint=current.associated_edges[edge_i];
                     temp.next_stop=all_nodes[waypoint.key_to];
+					std::cout << "\nyo this is" << std::get<0>(current.location) << "," << std::get<1>(current.location);
+					std::cout << "\n" << std::get<0>(temp.next_stop.location) << "," << std::get<1>(temp.next_stop.location);
                     if (closed_list.count(temp.next_stop.location)==0 && open_dupls.count(temp.next_stop.location) == 0)
                     {
 						std::cout << "\nAdditions";
@@ -357,7 +360,6 @@ void subset_entrances(
 		std::vector<int> fromvec_comp = vec_from_container[i];
 		if (fromvec_comp.size() == 0)
 		{
-			std::cout << "\nmierda";
 			continue;
 		}
 		std::vector<std::tuple<int, int, int>> possible_entrances = cheapest(costs, myvec_comp, fromvec_comp);
@@ -426,46 +428,49 @@ void subset_entrances(
 		pf_edge inter_edge;
 		inter_edge.key_to.depth = depth;
 		inter_edge.key_to.location = inter_edges[i_from];
+		if (which == tuple_int(0, 0) && costs == terrain_costs)
+		{
+			std::cout << "\n" << std::get<0>(inter_edge.key_to.location) << "," << std::get<1>(inter_edge.key_to.location);
+		}
 		inter_edge.key_to.t_mobility = costs;
 		inter_edge.cost = travel_cost[i_from];
 		inter_edge.path = { { std::tuple<tuple_int, int>(inter_edges[i_from], 0) },
 		{ std::tuple<tuple_int, int>(temp_node.location, inter_edge.cost) } };
 		temp_node.associated_edges.push_back(inter_edge);
 		path_with_cost empty_path;
-		for (int i_to = 0; i_to<mod_pos_entrances.size(); ++i_to)
-		{
-			tuple_int coord_to = mod_pos_entrances[i_to];
-			if (coord_from != coord_to)
-			{
-				pf_edge temp_edge;
-				float total_cost = 0;
-				temp_edge.key_to.depth = depth;
-				temp_edge.key_to.location = coord_to;
-				temp_edge.key_to.t_mobility = costs;
-				//std::cout << "\n" << std::get<0>(coord_from) << "," << std::get<1>(coord_from) << "     " << std::get<0>(coord_to) << "," << std::get<1>(coord_to);
-				temp_edge.path = a_pathfind_controller(current_map, coord_from, coord_to, costs, std::get<0>(which)*cut_size, std::get<1>(which)*cut_size);
-				if (temp_edge.path != empty_path)
-				{
-					for (std::tuple<tuple_int, float> tile : temp_edge.path)
-					{
-						total_cost += std::get<1>(tile);
-					}
-					temp_edge.cost = total_cost;
-					temp_node.associated_edges.push_back(temp_edge);
-					//                                pf_edge_key temp_edge_key;
-					//                                temp_edge_key.from=coord_from;
-					//                                temp_edge_key.to=coord_to;
-					//                                temp_edge_key.t_mobility=costs;
-					//                                graph_edges[temp_edge_key]=temp_edge;
-				}
-				else
-				{
-					continue;
-				}
-			}
-		}
+		//for (int i_to = 0; i_to<mod_pos_entrances.size(); ++i_to)
+		//{
+		//	tuple_int coord_to = mod_pos_entrances[i_to];
+		//	if (coord_from != coord_to)
+		//	{
+		//		pf_edge temp_edge;
+		//		float total_cost = 0;
+		//		temp_edge.key_to.depth = depth;
+		//		temp_edge.key_to.location = coord_to;
+		//		temp_edge.key_to.t_mobility = costs;
+		//		//std::cout << "\n" << std::get<0>(coord_from) << "," << std::get<1>(coord_from) << "     " << std::get<0>(coord_to) << "," << std::get<1>(coord_to);
+		//		temp_edge.path = a_pathfind_controller(current_map, coord_from, coord_to, costs, std::get<0>(which)*cut_size, std::get<1>(which)*cut_size);
+		//		if (temp_edge.path != empty_path)
+		//		{
+		//			for (std::tuple<tuple_int, float> tile : temp_edge.path)
+		//			{
+		//				total_cost += std::get<1>(tile);
+		//			}
+		//			temp_edge.cost = total_cost;
+		//			temp_node.associated_edges.push_back(temp_edge);
+		//		}
+		//		else
+		//		{
+		//			continue;
+		//		}
+		//	}
+		//}
 		subset_graph_nodes[temp_node_key] = temp_node;
 		subset_nodes_in_this_section.push_back(temp_node_key);
+		if (which == tuple_int(0, 0) && costs==terrain_costs)
+		{
+			std::cout << "\nyo" << std::get<0>(temp_node.associated_edges[0].key_to.location) << "," << std::get<1>(temp_node.associated_edges[0].key_to.location);
+		}
 	}
 	local_node_key temp_local_key;
 	temp_local_key.map_coord = which;
