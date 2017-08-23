@@ -121,8 +121,8 @@ std::vector<int> get_edge(vectormap& current, where which_one, bool& mine)
 //interedges
 std::vector<std::tuple<int,int,int>> cheapest(std::vector<int>& vec_terrain_costs, std::vector<int>& mine, std::vector<int>& other)
 {
-    int bestcost=90; //this is a massive move cost that would never be seen. probably should've used -1, but w/e
-    int currentcost;
+    float bestcost=90; //this is a massive move cost that would never be seen. probably should've used -1, but w/e
+    float currentcost;
     std::vector<std::tuple<int, int, int>> best;
     std::vector<std::tuple<int, int, int>> to_return;
     for (int j=0; j<mine.size(); ++j)
@@ -232,6 +232,7 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
     pf_node current=start;
     pf_node previous;
     pf_node path;
+
     bool success=false;
     while (success==false)
     {
@@ -428,47 +429,44 @@ void subset_entrances(
 		pf_edge inter_edge;
 		inter_edge.key_to.depth = depth;
 		inter_edge.key_to.location = inter_edges[i_from];
-		if (which == tuple_int(0, 0) && costs == terrain_costs)
-		{
-			std::cout << "\n" << std::get<0>(inter_edge.key_to.location) << "," << std::get<1>(inter_edge.key_to.location);
-		}
 		inter_edge.key_to.t_mobility = costs;
 		inter_edge.cost = travel_cost[i_from];
 		inter_edge.path = { { std::tuple<tuple_int, int>(inter_edges[i_from], 0) },
 		{ std::tuple<tuple_int, int>(temp_node.location, inter_edge.cost) } };
 		temp_node.associated_edges.push_back(inter_edge);
 		path_with_cost empty_path;
-		//for (int i_to = 0; i_to<mod_pos_entrances.size(); ++i_to)
-		//{
-		//	tuple_int coord_to = mod_pos_entrances[i_to];
-		//	if (coord_from != coord_to)
-		//	{
-		//		pf_edge temp_edge;
-		//		float total_cost = 0;
-		//		temp_edge.key_to.depth = depth;
-		//		temp_edge.key_to.location = coord_to;
-		//		temp_edge.key_to.t_mobility = costs;
-		//		//std::cout << "\n" << std::get<0>(coord_from) << "," << std::get<1>(coord_from) << "     " << std::get<0>(coord_to) << "," << std::get<1>(coord_to);
-		//		temp_edge.path = a_pathfind_controller(current_map, coord_from, coord_to, costs, std::get<0>(which)*cut_size, std::get<1>(which)*cut_size);
-		//		if (temp_edge.path != empty_path)
-		//		{
-		//			for (std::tuple<tuple_int, float> tile : temp_edge.path)
-		//			{
-		//				total_cost += std::get<1>(tile);
-		//			}
-		//			temp_edge.cost = total_cost;
-		//			temp_node.associated_edges.push_back(temp_edge);
-		//		}
-		//		else
-		//		{
-		//			continue;
-		//		}
-		//	}
-		//}
+		for (int i_to = 0; i_to<mod_pos_entrances.size(); ++i_to)
+		{
+			tuple_int coord_to = mod_pos_entrances[i_to];
+			if (coord_from != coord_to)
+			{
+				pf_edge temp_edge;
+				float total_cost = 0;
+				temp_edge.key_to.depth = depth;
+				temp_edge.key_to.location = coord_to;
+				temp_edge.key_to.t_mobility = costs;
+				//std::cout << "\n" << std::get<0>(coord_from) << "," << std::get<1>(coord_from) << "     " << std::get<0>(coord_to) << "," << std::get<1>(coord_to);
+				temp_edge.path = a_pathfind_controller(current_map, coord_from, coord_to, costs, std::get<0>(which)*cut_size, std::get<1>(which)*cut_size);
+				if (temp_edge.path != empty_path)
+				{
+					for (std::tuple<tuple_int, float> tile : temp_edge.path)
+					{
+						total_cost += std::get<1>(tile);
+					}
+					temp_edge.cost = total_cost;
+					temp_node.associated_edges.push_back(temp_edge);
+				}
+				else
+				{
+					continue;
+				}
+			}
+		}
 		subset_graph_nodes[temp_node_key] = temp_node;
 		subset_nodes_in_this_section.push_back(temp_node_key);
 		if (which == tuple_int(0, 0) && costs==terrain_costs)
 		{
+            std::cout<<"\nhella"<<std::get<0>(temp_node.location)<<","<<std::get<1>(temp_node.location);
 			std::cout << "\nyo" << std::get<0>(temp_node.associated_edges[0].key_to.location) << "," << std::get<1>(temp_node.associated_edges[0].key_to.location);
 		}
 	}
@@ -479,6 +477,15 @@ void subset_entrances(
 	subset_local_nodes[temp_local_key] = subset_nodes_in_this_section;
 	subset_retrieval.local_nodes = subset_local_nodes;
 	subset_retrieval.all_nodes = subset_graph_nodes;
+    if (which == tuple_int(0, 0) && costs==terrain_costs)
+    {
+        pf_node_key temp_node_key;
+        temp_node_key.location=tuple_int(63,42);
+        temp_node_key.depth=1;
+        temp_node_key.t_mobility={1,2,3,4,0};
+        pf_node better_have=subset_retrieval.all_nodes[temp_node_key];
+        //std::cout << "\nyo better have" << std::get<0>(better_have.associated_edges[0].key_to.location) << "," << std::get<1>(better_have.associated_edges[0].key_to.location);
+    }
 }
 
 node_retrieval entrances(std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& map_set,
@@ -589,16 +596,18 @@ node_retrieval entrances(std::unordered_map<tuple_int, vectormap, boost::hash<tu
 		{
 			for (int t = 0; t < threads_supported; ++t)
 			{
-				std::vector<int> costs = vec_of_terrain_costs[(i*threads_supported) + t];
-				threads.push_back(std::thread(subset_entrances,
-												std::ref(which), std::ref(current_map), cut_size, costs, from_right.size(), from_bottom.size(),
-												std::ref(vec_from_container), std::ref(vec_my_container), std::ref(subset_retrievals[(i*threads_supported) + t])));
+                if (((i*threads_supported) + t)<vec_of_terrain_costs.size())
+                {
+                    std::vector<int> costs = vec_of_terrain_costs[(i*threads_supported) + t];
+                    threads.push_back(std::thread(subset_entrances,
+                                                  std::ref(which), std::ref(current_map), cut_size, costs, from_right.size(), from_bottom.size(),
+                                                  std::ref(vec_from_container), std::ref(vec_my_container), std::ref(subset_retrievals[(i*threads_supported) + t])));
+                }
 			}
-			for (int t = 0; t < threads_supported; ++t)
-			{
-				auto& current_thread = threads[(i*threads_supported) + t];
-				current_thread.join();
-			}
+            for (auto& current_thread:threads)
+            {
+                current_thread.join();
+            }
 		}
 		threads.clear();
 		for (node_retrieval nr : subset_retrievals)
