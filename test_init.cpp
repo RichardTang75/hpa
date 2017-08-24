@@ -25,26 +25,10 @@ void map_stuff (int width, int height, vectormap& bigmap)
     int cut_size=64;
     std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> map_set=cut(bigmap, 0, 0, cut_size);
     node_retrieval nodes=entrances(map_set, bigmap, cut_size, false, 0, 0, width/cut_size, height/cut_size, possible_move_costs);
-    //
-    //std::vector<int> basic={1,2,3,4,0};
-    pf_node_key temp_node_key;
-    temp_node_key.depth=1;
-    temp_node_key.location=tuple_int(64,43);
-    temp_node_key.t_mobility=basic;
-    std::cout<<"START";
-    pf_node temp_node=nodes.all_nodes[temp_node_key];
-    pf_node other_node=nodes.all_nodes[temp_node.associated_edges[0].key_to];
-    std::cout<<"\n mooooooooo"<<temp_node.associated_edges[0].key_to.depth<<temp_node.associated_edges[0].key_to.t_mobility.size();
-    std::cout<<"\n"<<std::get<0>(temp_node.location)<<","<<std::get<1>(temp_node.location);
-    std::cout<<"\n yo better have" <<std::get<0>(other_node.location)<<
-    std::get<1>(other_node.location)<<"\n";
-    //
-
     tuple_int start=tuple_int(10,10);
     tuple_int end=tuple_int(510,510);
     path_with_cost path_and_cost=hierarchical_pathfind(end, start, basic, map_set, 1, cut_size, nodes);
-    std::cout<<map_set.size()<<"\n"<<nodes.local_nodes.size()<<"\n"<<nodes.all_nodes.size()<<"\n";
-    std::cout<<path_and_cost.size();
+    std::cout<<"\n"<<path_and_cost.size();
     int count=0;
     for (int i=0; i<path_and_cost.size();i++)
     {
@@ -55,5 +39,4 @@ void map_stuff (int width, int height, vectormap& bigmap)
         ++count;
         int x=std::get<0>(std::get<0>(path_and_cost[i]));
         int y=std::get<1>(std::get<0>(path_and_cost[i]));
-        std::cout<<x<<","<<y<<","<<std::get<1>(path_and_cost[i])<<"\n";
     }}

@@ -8,8 +8,10 @@
 
 #include "pathfinding.hpp"
 #include "goodfunctions.hpp"
-#include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
+//#include <SDL2/SDL.h>
+//#include <SDL2_image/SDL_image.h>
 class unit{
 public:
     void move(tuple_int to)

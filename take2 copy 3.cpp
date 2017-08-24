@@ -16,10 +16,10 @@
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
 #include "terrain.hpp"
-//#include <SDL.h>
-//#include <SDL_image.h>
-#include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
+//#include <SDL2/SDL.h>
+//#include <SDL2_image/SDL_image.h>
 #include "test_init.hpp"
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
 std::vector<std::vector<int>> possible_move_costs=
