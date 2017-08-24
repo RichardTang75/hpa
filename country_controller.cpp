@@ -6,17 +6,20 @@
 //  Copyright © 2017 asdfuiop. All rights reserved.
 //
 
-#include "pathfinding.hpp"
 #include "goodfunctions.hpp"
 #include <SDL.h>
 #include <SDL_image.h>
+#include "hierarchical_pathfind.hpp"
+#include "boost/functional.hpp"
 //#include <SDL2/SDL.h>
 //#include <SDL2_image/SDL_image.h>
 class unit{
 public:
-    void move(tuple_int to)
+    void move(tuple_int& to, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size)
     {
         //stuff
+		tuple_int from = tuple_int(x, y);
+		hierarchical_pathfind(to, from, t_mobility, mapset, max_depth, cut_size, nodes);
     }
     void attack(unit& other)
     {
@@ -119,6 +122,7 @@ private:
     path_with_cost current_path;
     int count;
     int reform_count;
+	std::vector<int> t_mobility;
 };
 class country_controller{
 private:
