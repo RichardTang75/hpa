@@ -6,6 +6,8 @@
 //  Created by asdfuiop on 6/10/17.
 //  Copyright © 2017 asdfuiop
 
+// code for the pixel came from http://sol.gfxile.net/gp/ch02.html and 
+// https://www.gamedev.net/forums/topic/358269-copying-pixels-to-an-sdl-surface/.
 #include <iostream>
 #include <string>
 #include <random>
