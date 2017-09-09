@@ -117,7 +117,7 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
     Uint8 red,green,blue;
     int width=temp->w;
     int height=temp->h;
-    Uint32* pixels=(Uint32*)temp->pixels;
+    Uint32* dstpixels=(Uint32*)temp->pixels;
     for (int y=0; y<(height);++y)
     {
         for (int x=0; x<(width);++x)
@@ -125,7 +125,7 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
             if (to_add.count(std::make_tuple(x,y))>0)
             {
                 SDL_GetRGB(srcpixels[(scanline*y)+x],initial->format,&red,&green,&blue);
-                pixels[(scanline*y)+x]=SDL_MapRGBA(temp->format,red,green,blue,0xFF);
+                dstpixels[(scanline*y)+x]=SDL_MapRGBA(temp->format,red,green,blue,0xFF);
             }
         }
     }
