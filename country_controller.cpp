@@ -13,14 +13,35 @@
 #include "boost/functional.hpp"
 //#include <SDL2/SDL.h>
 //#include <SDL2_image/SDL_image.h>
-class unit{
+class unit_modifier //perhaps experience n shit
+{
+
+};
+class unit
+{
 public:
-    void move(tuple_int& to, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size)
+    void move(void)
     {
-        //stuff
-		tuple_int from = tuple_int(x, y);
-		hierarchical_pathfind(to, from, t_mobility, mapset, max_depth, cut_size, nodes);
+		float cost = 0;
+		tuple_int end;
+		if (new_move_count > 0) { new_move_count -= 1; }
+		while (cost <= effective_speed)
+		{
+			end=std::get<0>(current_path.back());
+			cost += std::get<1>(current_path.back());
+			current_path.pop_back();
+		}
     }
+	void set_move_target(tuple_int& to, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size)
+	{
+		tuple_int current_move_target = std::get<0>(current_path[0]);
+		if (dist_squared(to, current_move_target) > 100 or (new_move_count == 0))
+		{
+			tuple_int from = tuple_int(x, y);
+			current_path = hierarchical_pathfind(to, from, t_mobility, mapset, max_depth, cut_size, nodes);
+			new_move_count = 5;
+		}
+	}
     void attack(unit& other)
     {
         tuple_int other_loc=tuple_int(other.x,other.y);
@@ -37,14 +58,17 @@ public:
         }
         else
         {
-            
+			//check if it's not close enough 
+			//set move target
+			move();
         }
     }
-    void routing(int xstart, int ystart, int xend, int yend)
+    void routing(int xstart, int ystart, int xend, int yend, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size)
     {
         int try_size=(xstart-xend)/2;
         int dx=std::get<0>(dir_deployed_from);
         int dy=std::get<1>(dir_deployed_from);
+		tuple_int run_to;
         for (;;)
         {
             int new_x=x+dx*try_size;
@@ -52,13 +76,15 @@ public:
             if (try_size==1){
                 if (in_bounds(xstart, xend, ystart, yend, new_x,new_y))
                 {
-                    move(tuple_int(new_x,new_y));
+					run_to = tuple_int(new_x, new_y);
+                    set_move_target(run_to, nodes, mapset, max_depth, cut_size);
                 }
                 else
                 {
                     new_x-=dx;
                     new_y-=dy;
-                    move(tuple_int(new_x,new_y));
+					run_to = tuple_int(new_x, new_y);
+                    set_move_target(run_to, nodes, mapset,max_depth, cut_size);
                 }
             }
             else if (in_bounds(xstart, xend, ystart, yend, new_x,new_y))
@@ -99,12 +125,14 @@ public:
             {
                 if(width==-3 or height==-1 or height==1 or width==3)
                 {
-                    outline[count1]->x=x+width;// THIS ISN'T DONE
+                    outline[count1]->x=(x+width)*(-1)*(percent_y);//the negative one is because up is negative
+					outline[count1]->y = (y + height)*percent_x;
                     ++count1;
                 }
                 else
                 {
-                    points[count2]->x=0; //THIS ISN'T DONE
+					points[count2]->x = (x + width)*(-1)*(percent_y);
+					points[count2]->y = (y + height)*percent_x;
                     ++count2;
                 }
             }
@@ -120,7 +148,7 @@ private:
     float percent_x,percent_y;
     tuple_int to;
     path_with_cost current_path;
-    int count;
+    int new_move_count=5;
     int reform_count;
 	std::vector<int> t_mobility;
 };

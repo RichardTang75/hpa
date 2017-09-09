@@ -23,20 +23,21 @@ void map_stuff (int width, int height, vectormap& bigmap)
     };
     std::vector<int> basic={1,2,3,4,0};
     int cut_size=64;
-    std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> map_set=cut(bigmap, 0, 0, cut_size);
+    /*std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> map_set=cut(bigmap, 0, 0, cut_size);
     node_retrieval nodes=entrances(map_set, bigmap, cut_size, false, 0, 0, width/cut_size, height/cut_size, possible_move_costs);
     tuple_int start=tuple_int(10,10);
     tuple_int end=tuple_int(510,510);
     path_with_cost path_and_cost=hierarchical_pathfind(end, start, basic, map_set, 1, cut_size, nodes);
     std::cout<<"\n"<<path_and_cost.size();
-    int count=0;
-    for (int i=0; i<path_and_cost.size();i++)
-    {
-        if (count>1000)
-        {
-            break;
-        }
-        ++count;
-        int x=std::get<0>(std::get<0>(path_and_cost[i]));
-        int y=std::get<1>(std::get<0>(path_and_cost[i]));
-    }}
+    int count=0;*/
+    //for (int i=0; i<path_and_cost.size();i++)
+    //{
+    //    if (count>1000)
+    //    {
+    //        break;
+    //    }
+    //    ++count;
+    //    int x=std::get<0>(std::get<0>(path_and_cost[i]));
+    //    int y=std::get<1>(std::get<0>(path_and_cost[i]));
+    //}
+}
