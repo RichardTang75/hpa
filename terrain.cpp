@@ -23,6 +23,30 @@ void tuple_set_expand(tuple_set& in, tuple_int& coord)
     in.emplace(tuple_int(cur_x,cur_y+1));
     in.emplace(tuple_int(cur_x,cur_y-1));
 }
+void tuple_set_remove(tuple_set& in, tuple_int& coord)
+{
+	int cur_x = std::get<0>(coord);
+	int cur_y = std::get<1>(coord);
+	in.erase(coord);
+	std::vector<tuple_int> directions =
+	{
+		tuple_int(-1,0),tuple_int(0,-1),tuple_int(0,1),tuple_int(1,0),
+		/*tuple_int(-1,1),tuple_int(-1,-1),tuple_int(1,1),tuple_int(1,-1),
+		tuple_int(-2,0),tuple_int(2,0),tuple_int(0,-2),tuple_int(0,2),
+		tuple_int(-2,1),tuple_int(-2,-1),tuple_int(2,1),tuple_int(2,-1),
+		tuple_int(1,-2),tuple_int(1,2),tuple_int(-1,-2),tuple_int(-1,2)*/
+	};
+	for (tuple_int dir : directions)
+	{
+		int dx = std::get<0>(dir);
+		int dy = std::get<1>(dir);
+		tuple_int to_remove = tuple_int(cur_x + dx, cur_y + dy);
+		if ((in.count(to_remove)) == 1)
+		{
+			in.erase(to_remove);
+		}
+	}
+}
 void snake_expand(tuple_set& in, tuple_int& coord, tuple_int& dir)
 {
     int dx=std::get<0>(dir);

@@ -10,6 +10,7 @@
 #define terrain_hpp
 
 void tuple_set_expand(tuple_set& in, tuple_int& coord);
+void tuple_set_remove(tuple_set& in, tuple_int& coord);
 void snake_expand(tuple_set& in, tuple_int& coord, tuple_int& dir);
 void array_img(std::vector<std::vector<int>>& array,std::vector<unsigned char>& img,
                const int& rows, const int& cols, int terrain=0);

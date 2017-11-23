@@ -20,6 +20,12 @@ void gen_terrain(const int& xStart, const int& xEnd,
                  const int& branch_min, const int& branch_max,
                  tuple_set& to_return,
                  unsigned seed = 0);
-
+std::tuple<std::vector<tuple_set>, vectormap> map_controller(const int& x_size, const int& y_size,
+															const int& side_size,
+															tuple_set& N, tuple_set& E,
+															tuple_set& S, tuple_set& W,
+															unsigned long long init_seed = 0,
+															int map_x = 0, int map_y = 0,
+															int terrain_type = 0);
 
 #endif /* mapgen_h */
