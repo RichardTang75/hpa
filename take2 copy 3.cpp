@@ -15,10 +15,17 @@
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
+<<<<<<< HEAD
 //#include <SDL.h>
 //#include <SDL_image.h>
 #include <SDL2/SDL.h>
 #include <SDL2_image/SDL_image.h>
+=======
+#include <SDL.h>
+#include <SDL_image.h>
+//#include <SDL2/SDL.h>
+//#include <SDL2_image/SDL_image.h>
+>>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 #include "test_init.hpp"
 #include "country_controller.hpp"
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
