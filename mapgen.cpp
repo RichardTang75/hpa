@@ -13,19 +13,15 @@
 #include "goodfunctions.hpp"
 #include "terrain.hpp"
 #include "lodepng.h"
-<<<<<<< HEAD
 std::vector<tuple_int> directions=
 {
     tuple_int(-1,-1),tuple_int(-1,0),tuple_int(-1,1),
     tuple_int(0,-1),                tuple_int(0,1),
     tuple_int(1,-1),tuple_int(1,0),tuple_int(1,1)
 };
-
 enum Cardinal {Northwest, West, Southwest,
                 North,          South,
                 Northeast, East, Southeast};
-=======
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 void terrain_overlap(tuple_set& bottom, tuple_set& top, float threshold=.05 ,int seed = 0)
 {
 	std::mt19937 eng;
@@ -53,11 +49,7 @@ inline tuple_set bresenham(int startx, int endx, int starty, int endy)
 	int dist = 2 * dy - dx;
 	int y = starty;
 	tuple_set line_parts;
-<<<<<<< HEAD
 	for (int x = startx; x < (endx + 1); ++x)
-=======
-	for (int x = 0; x < (endx + 1); ++x)
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 	{
 		line_parts.emplace(x, y);
 		while (dist > 0)
@@ -67,7 +59,6 @@ inline tuple_set bresenham(int startx, int endx, int starty, int endy)
 		}
 		dist = dist + 2 * dy;
 	}
-<<<<<<< HEAD
     return line_parts;
 }
 inline int cardinal_overflow(const int& xStart, const int& xEnd,
@@ -206,19 +197,13 @@ inline void cardinal_emplacer(const int& xStart, const int& xEnd,
                               end_x, end_y, start_x,  start_y,angle, West, neighbors);
         }
     }
-=======
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 }
 void step1(const int& xStart, const int& xEnd,
 	const int& yStart, const int& yEnd,
 	const int& howmany_min, const int& howmany_max,
 	const int& directions_min, const int& directions_max,
 	const int& length_min, const int& length_max,
-<<<<<<< HEAD
     tuple_set& to_return, std::vector<tuple_set>& neighbors,
-=======
-	tuple_set& to_return,
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 	unsigned seed = 0)
 {
 	static thread_local std::mt19937 eng(seed);
@@ -232,27 +217,15 @@ void step1(const int& xStart, const int& xEnd,
 	std::uniform_int_distribution<int> length_many(length_min, length_max);
 	std::uniform_int_distribution<int> directions_many(directions_min, directions_max);
 	std::uniform_real_distribution<float> threshold(0, 1);
-<<<<<<< HEAD
 	std::uniform_real_distribution<float> angle(0, (2*acos(-1)));
-=======
-	std::uniform_real_distribution<float> angle(0, 2*acos(-1));
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 	std::vector<tuple_int> additions = { tuple_int(-1,0),tuple_int(1,0),tuple_int(0,-1),tuple_int(1,0) };
 	int how_many = rand_many(eng);
 	int temp_many_directions;
 	float angle_chosen;
 	int tempX, tempY;
-<<<<<<< HEAD
     int end_x, end_y;
 	int cur_x, cur_y;
     while (to_return.size() < how_many)
-=======
-	int d_x, d_y;
-	int end_x, end_y;
-	int cur_x, cur_y;
-	int size_many;
-	while (to_return.size() < how_many)
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 	{
 		tempX = randX(eng);
 		tempY = randY(eng);
@@ -273,7 +246,6 @@ void step1(const int& xStart, const int& xEnd,
 		{
 			int radius = length_many(eng);
 			angle_chosen = angle(eng);
-<<<<<<< HEAD
             cur_x = std::get<0>(coord);
             cur_y = std::get<1>(coord);
 			end_x = cur_x+cos(angle_chosen)*radius;
@@ -288,30 +260,6 @@ void step1(const int& xStart, const int& xEnd,
                                        std::min(cur_y, end_y), std::max(cur_y, end_y));
             //final step takes care of over the bounds from the tuple set
 			tuple_set_union(to_union, bresen);
-=======
-			end_x = cos(angle_chosen)*radius;
-			end_y = sin(angle_chosen)*radius;
-			cur_x = std::get<0>(coord);
-			cur_y = std::get<1>(coord);
-			if (end_x > xEnd)
-			{
-
-			}
-			else if(end_x < xStart)
-			{
-
-			}
-			if (end_y > yEnd)
-			{
-
-			}
-			else if (end_y < yStart)
-			{
-
-			}
-			tuple_set_union(to_union,bresenham(std::min(cur_x, end_x), std::max(cur_x, end_x),
-												std::min(cur_y, end_y), std::max(cur_y, end_y)));
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 		}
 	}
 	tuple_set_union(to_return, to_union);
@@ -324,7 +272,6 @@ void step1(const int& xStart, const int& xEnd,
 			float temp_thresh = threshold(eng);
 			if (temp_thresh<.01)
 			{
-<<<<<<< HEAD
                 int radius = length_many(eng);
                 angle_chosen = angle(eng);
                 cur_x = std::get<0>(coord);
@@ -341,18 +288,6 @@ void step1(const int& xStart, const int& xEnd,
                                            std::min(cur_y, end_y), std::max(cur_y, end_y));
                 //final step takes care of over the bounds from the tuple set
                 tuple_set_union(to_union, bresen);
-=======
-				int temp_length = length_many(eng);
-				direction_chosen = directions[direction_chooser(eng)];
-				d_x = std::get<0>(direction_chosen);
-				d_y = std::get<1>(direction_chosen);
-				for (int i = 0; i<temp_length; ++i)
-				{
-					cur_x = std::get<0>(coord);
-					cur_y = std::get<1>(coord);
-					to_union.emplace(tuple_int(cur_x + (d_x*i), cur_y + (d_y*i)));
-				}
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 			}
 		}
 	}
@@ -382,15 +317,6 @@ void gen_terrain(const int& xStart, const int& xEnd,
     std::uniform_int_distribution<int> size_chooser(size_min,size_max);
     std::uniform_real_distribution<float> threshold(0,1);
     std::vector<tuple_int> additions={tuple_int(-1,0),tuple_int(1,0),tuple_int(0,-1),tuple_int(1,0)};
-<<<<<<< HEAD
-=======
-    std::vector<tuple_int> directions=
-    {
-        tuple_int(-1,-1),tuple_int(-1,0),tuple_int(-1,1),
-        tuple_int(0,-1),                tuple_int(0,1),
-        tuple_int(1,-1),tuple_int(1,0),tuple_int(1,1)
-    };
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
     int how_many=rand_many(eng);
     tuple_int direction_chosen;
     int temp_many_directions;
@@ -572,7 +498,6 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 	}
 	std::tie(marsh, forests, mountains, water) = std::make_tuple(terrain_overlap_decider[0], terrain_overlap_decider[1],
 		terrain_overlap_decider[2], terrain_overlap_decider[3]);
-<<<<<<< HEAD
 //	for (tuple_int point : summed)
 //	{
 //		int cur_x = std::get<0>(point);
@@ -588,23 +513,6 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 //			}
 //		}
 //	}
-=======
-	for (tuple_int point : summed)
-	{
-		int cur_x = std::get<0>(point);
-		int cur_y = std::get<1>(point);
-		for (tuple_int dirs : additions)
-		{
-			int dx = std::get<0>(dirs);
-			int dy = std::get<1>(dirs);
-			tuple_int temp_coord = tuple_int(cur_x + dx, cur_y + dy);
-			if (summed.count(temp_coord) == 0)
-			{
-				final_step.emplace(temp_coord);
-			}
-		}
-	}
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
 	std::vector<map_tuple> total =
 	{ map_tuple(forests,1),map_tuple(marsh,2),
 		map_tuple(mountains,3),map_tuple(water,4),
@@ -623,7 +531,6 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 			}
 		}
 	}
-<<<<<<< HEAD
     //debugging processes and leftover only
 //	for (tuple_int coord : final_step)
 //	{
@@ -671,7 +578,7 @@ void retrieve_maps(int map_x, int map_y, const int& x_size, const int& y_size,
     std::vector<tuple_set> pert_neighbors;
     for (tuple_int dir:directions)
     {
-        tuple_int nearby=(std::get<0>(dir)+map_x,std::get<1>(dir)+map_y);
+        tuple_int nearby= tuple_int (std::get<0>(dir)+map_x,std::get<1>(dir)+map_y);
         if (created.count(nearby)==1)
         {
             pert_neighbors.push_back(neighbors[nearby]);
@@ -690,42 +597,3 @@ unordered_map of every square-> neighbors
 unordered map of every square->base map
 to get one map, you get retrieve base maps and each of neighbor's maps. thus for every one, you need 9 made.
 */
-=======
-
-	for (tuple_int coord : final_step)
-	{
-		int tempX = std::get<0>(coord);
-		int tempY = std::get<1>(coord);
-		if (in_bounds(x_start, x_end, y_start, y_end, tempX, tempY) == true)
-		{
-			walls[tempY][tempX] = 1;
-		}
-	}
-	array_img(map, image, rows, cols, terrain_type);
-	array_img(walls, wallimage, rows, cols, terrain_type);
-	std::vector<unsigned char> png;
-	std::vector<unsigned char> png2;
-	lodepng::State state;
-	lodepng::State state2;
-	unsigned error = lodepng::encode(png, image, rows, cols, state);
-	if (!error)
-	{
-		lodepng::save_file(png, "cplusplus.png");
-	}
-	else
-	{
-		std::cout << "encoder error " << error << ": " << lodepng_error_text(error) << "\n";
-	}
-	unsigned nerror = lodepng::encode(png2, wallimage, rows, cols, state2);
-	if (!nerror)
-	{
-		lodepng::save_file(png2, "cplusplus2.png");
-	}
-	else
-	{
-		std::cout << "encoder error " << nerror << ": " << lodepng_error_text(nerror) << "\n";
-	}
-	std::vector<tuple_set> to_return_sets = { forests,mountains,water,marsh,ret_north,ret_east,ret_south,ret_west };
-	return std::make_tuple(to_return_sets, map);
-}
->>>>>>> 4918a06dd6a7386429b997948ad1c36a30d0fd7f
