@@ -208,11 +208,22 @@ std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector
 	}
 	return selected;
 }
+/*
+const int& map_x, const int& map_y,
+const int& x_size, const int& y_size,
+const int& side_size,
+tuple_set& created,
+std::unordered_map< std::tuple<int, int, int>, std::vector<tuple_set>, boost::hash<std::tuple<int, int, int>>>& neighbors,
+unsigned long long init_seed = 0,
+int terrain_type = 0
+*/
 void load_background(back_text& back, back_text& grass)
 {
 	tuple_set empty;
 	std::tuple<std::vector<tuple_set>, vectormap> sets_map;
-	sets_map = map_controller(512, 512, 24, empty, empty, empty, empty);
+	tuple_triple_map created;
+	overflow_map neighbors;
+	sets_map = map_controller(0, 0, 512, 512, created, neighbors);
 	std::vector<tuple_set> temp_map = std::get<0>(sets_map);
 	vectormap map = std::get<1>(sets_map);
 	tuple_set forest, mount, water, marsh, N, E, S, W;

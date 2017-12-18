@@ -21,5 +21,7 @@ std::tuple<int,int,int,int> det_bounds(const int& x_size,
                                        tuple_set& S, tuple_set& W);
 void print_tuple(tuple_set toprint);
 void tuple_set_union(tuple_set& in1, tuple_set& in2);
+void bresenham(tuple_set& in, int startx, int endx, int starty, int endy);
+
 
 #endif /* terrain_hpp */

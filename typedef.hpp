@@ -19,5 +19,7 @@ typedef std::tuple<int, int> tuple_int;
 typedef std::unordered_set<tuple_int, boost::hash<tuple_int>> tuple_set;
 typedef std::tuple<tuple_set,int> map_tuple;
 typedef std::vector<std::vector<int>> vectormap;
+typedef std::unordered_map< std::tuple<int, int, int>, std::vector<tuple_set>, boost::hash<std::tuple<int, int, int>>> overflow_map;
+typedef std::unordered_map< std::tuple<int, int, int>, tuple_set, boost::hash<std::tuple<int, int, int>>> tuple_triple_map;
 
 #endif /* typedef_hpp */

@@ -59,6 +59,50 @@ void snake_expand(tuple_set& in, tuple_int& coord, tuple_int& dir)
         tuple_set_expand(in, to_add);
     }
 }
+void bresenham(tuple_set& in, int startx, int endx, int starty, int endy)
+{
+	int dx = endx - startx;
+	int dy = endy - starty;
+	int dist = 2 * dy - dx;
+	int y = starty;
+	for (int x = startx; x < (endx + 1); ++x)
+	{
+		in.emplace(x, y);
+		while (dist > 0 && dx != 0)
+		{
+			y = y + 1;
+			dist = dist - 2 * dx;
+		}
+		dist = dist + 2 * dy;
+	}
+}
+void bresenham_expand(tuple_set& in, tuple_int& coord, float& angle)
+{
+	int passed_x = std::get<0>(coord);
+	int passed_y = std::get<1>(coord);
+	int radius = 5; //small but noticeable protrusions. Many of them.
+	int circle_x = cos(angle) + passed_x;
+	int circle_y = sin(angle) + passed_y;
+	int startx = std::min(passed_x, circle_x);
+	int endx = std::max(passed_x, circle_x);
+	int starty = std::min(passed_y, circle_y);
+	int endy = std::max(passed_y, circle_y);
+	int dx = endx - startx;
+	int dy = endy - starty;
+	int dist = 2 * dy - dx;
+	int y = starty;
+	for (int x = startx; x < (endx + 1); ++x)
+	{
+		tuple_int next = tuple_int(x, y);
+		tuple_set_expand(in, next);
+		while (dist > 0)
+		{
+			y = y + 1;
+			dist = dist - 2 * dx;
+		}
+		dist = dist + 2 * dy;
+	}
+}
 void array_img(std::vector<std::vector<int>>& array,std::vector<unsigned char>& img,
                const int& rows, const int& cols, int terrain=0)
 {
