@@ -480,7 +480,7 @@ void retrieve_maps(const int& map_x, const int& map_y, const int& terrain,
 			step1(0, 512, 0, 512, howmany_min, howmany_max, directions_min, directions_max,
 				length_min, length_max, created[std::make_tuple(nearby_x, nearby_y, terrain)], neighbors_to_pass_in, init_seed);
 			neighbors[std::make_tuple(nearby_x, nearby_y, terrain)] = neighbors_to_pass_in;
-			pert_neighbors.push_back((neighbors[std::make_tuple(nearby_x, nearby_y, terrain)])[8 - i]);
+			pert_neighbors.push_back(neighbors[std::make_tuple(nearby_x, nearby_y, terrain)][7 - i]);
 		}
 	}
 	//remember to step 1 the initial one too
@@ -583,14 +583,15 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 	overflow_map msh_neighbors = get_valid_neighbors(map_x, map_y, Msh, neighbors);
 	std::vector<tuple_triple_map> triples = { fst_triple, mtn_triple, wtr_triple, msh_triple };
 	std::vector<overflow_map> overflows = { fst_neighbors, mtn_neighbors, wtr_neighbors, msh_neighbors };
-	std::thread gen_fst(retrieve_maps, map_x, map_y, Fst, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(fst_neighbors), std::ref(fst_triple), seeds[0]);
-	std::thread gen_mtn(retrieve_maps, map_x, map_y, Mtn, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(mtn_neighbors), std::ref(mtn_triple), seeds[1]);
-	std::thread gen_wtr(retrieve_maps, map_x, map_y, Wtr, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(wtr_neighbors), std::ref(wtr_triple), seeds[2]);
-	std::thread gen_msh(retrieve_maps, map_x, map_y, Msh, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(msh_neighbors), std::ref(msh_triple), seeds[3]);
-	gen_fst.join();
+	retrieve_maps( map_x, map_y, Fst, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(fst_neighbors), std::ref(fst_triple), seeds[0]);
+	retrieve_maps( map_x, map_y, Mtn, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(mtn_neighbors), std::ref(mtn_triple), seeds[1]);
+	retrieve_maps( map_x, map_y, Wtr, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(wtr_neighbors), std::ref(wtr_triple), seeds[2]);
+	retrieve_maps( map_x, map_y, Msh, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(msh_neighbors), std::ref(msh_triple), seeds[3]);
+/*	gen_fst.join();
 	gen_mtn.join();
 	gen_wtr.join();
 	gen_msh.join();
+ */
 	for (tuple_triple_map triple : triples)
 	{
 		for (auto triple_pair : triple)
