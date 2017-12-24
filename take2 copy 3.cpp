@@ -15,13 +15,18 @@
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
-#include <SDL.h>
-#include <SDL_image.h>
-//#include <SDL2/SDL.h>
-//#include <SDL2_image/SDL_image.h>
+//#include <SDL.h>
+//#include <SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2_image/SDL_image.h>
 #include "test_init.hpp"
 #include "country_controller.hpp"
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
+//globals can go back into main if I really need it
+int map_width=512;
+int map_height=512;
+int camera_x=256;
+int camera_y=256;
 std::vector<std::vector<int>> possible_move_costs=
 {
     {1,2,3,4,0}, //basic move cost-used by fire and metal
@@ -217,43 +222,99 @@ std::unordered_map< std::tuple<int, int, int>, std::vector<tuple_set>, boost::ha
 unsigned long long init_seed = 0,
 int terrain_type = 0
 */
-void load_background(back_text& back, back_text& grass)
+void load_background(back_text& back, tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors)
 {
-	tuple_set empty;
 	std::tuple<std::vector<tuple_set>, vectormap> sets_map;
-	tuple_triple_map created;
-	overflow_map neighbors;
-	sets_map = map_controller(0, 0, 512, 512, created, neighbors);
+    sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, created, neighbors);
 	std::vector<tuple_set> temp_map = std::get<0>(sets_map);
 	vectormap map = std::get<1>(sets_map);
-	tuple_set forest, mount, water, marsh, N, E, S, W;
+	tuple_set forest, mount, water, marsh;
 	forest = temp_map[0];
 	mount = temp_map[1];
 	water = temp_map[2];
 	marsh = temp_map[3];
-	grass.simple_load("grass1t.png");
-	grass.make_text();
+	back.simple_load("grass1t.png");
 	back.surface_processing("marsh1t.png", marsh);
 	back.surface_processing("forest1t.png", forest);
 	back.surface_processing("mount1t.png", mount);
 	back.surface_processing("water1t.png", water);
 	back.make_text();
 }
-void draw_everything(back_text& back, back_text& grass, std::vector<unit>& all) 
+//max of 4 at once
+void draw_everything(back_text& back, std::vector<unit>& all,
+                     tuple_int& primary)
 {
-	grass.render(0, 0);
 	back.render(0, 0);
 	SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
 	for (unit i : all)
 	{
 		i.render(grenderer);
 	}
+    std::vector<tuple_int> to_draw;
+    if (camera_x-std::get<0>(primary)*512>256)
+    {
+        to_draw.push_back(std::make_tuple(std::get<0>(primary)+1,
+                                          std::get<1>(primary)));
+    }
+    else if (camera_x-std::get<0>(primary)*512==256)
+    {
+        //this is meant to be nothing.
+    }
+    else
+    {
+        to_draw.push_back(std::make_tuple(std::get<0>(primary)-1,
+                                          std::get<1>(primary)));
+    }
+    if (camera_y-std::get<1>(primary)*512>256)
+    {
+        to_draw.push_back(std::make_tuple(std::get<0>(primary),
+                                          std::get<1>(primary)+1));
+    }
+    else if (camera_y-std::get<1>(primary)*512==256)
+    {
+        //this is also meant to be nothing.
+    }
+    else
+    {
+        to_draw.push_back(std::make_tuple(std::get<0>(primary),
+                                          std::get<1>(primary)-1));
+    }
+}
+void draw_everything(back_text& back, std::vector<unit>& all)
+{
+    back.render(0, 0);
+    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
+    for (unit i : all)
+    {
+        i.render(grenderer);
+    }
+}
+void prepare_the_maps(tuple_int primary,
+                      tuple_set& finished,
+                      overflow_map& neighbors,
+                      tuple_triple_map& created)
+{
+    std::vector<tuple_int> first_dirs={
+        tuple_int(-1,0), tuple_int(1,0),
+        tuple_int(0,-1), tuple_int(0,1)};
+    std::vector<tuple_int> second_dirs={
+        tuple_int(-1,-1),tuple_int(-1,1),
+        tuple_int(1,-1), tuple_int(1,1)
+    };
+    for (tuple_int dir: first_dirs)
+    {
+        tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
+                                        std::get<1>(primary)+std::get<1>(dir));
+        if (finished.count(retrievin)==0)
+        {
+            map_controller(std::get<0>(retrievin), std::get<1>(retrievin), map_width, map_height, created, neighbors);
+        }
+    }
 }
 int main(int argc, char* argv[])
 {
-    int width=512;
-    int height=512;
-    if (!init(width,height))
+
+    if (!init(map_width,map_height))
     {
         std::cout<<"Failed to start \n";
     }
@@ -264,26 +325,25 @@ int main(int argc, char* argv[])
 	std::vector<unit> selected;
 	std::vector<unit> all{ temp };
 	back_text back(512, 512);
-	back_text grass(512, 512);
-	load_background(back, grass);
-	draw_everything(back, grass, all);
-    ////
-    //SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
-    //SDL_Rect sizer={width/4,height/4,7,3};
-    //SDL_Rect sizer2={width/4+1,height/4+1,5,1};
-    //SDL_RenderDrawRect(grenderer, &sizer);
-    //SDL_SetRenderDrawColor(grenderer, 0xFF, 0x00, 0x00, 0xFF);
-    //SDL_RenderFillRect(grenderer, &sizer2);
-    ////
+    tuple_triple_map created;
+    overflow_map neighbors;
+    tuple_int init=tuple_int(0,0);
+	load_background(back, init, created, neighbors);
+	draw_everything(back, all);
     SDL_RenderPresent(grenderer);
 	bool mousedown=false;
 	int mousestartx, mousestarty;
 	bool mousemovedwhiledown=false;
 	SDL_Event e;
+    std::vector<tuple_int> to_draw;
 	while (!quit) {
 		while (SDL_PollEvent(&e) != 0)
 		{
-			SDL_RenderClear(grenderer);
+            tuple_int primary=std::make_tuple(std::trunc(camera_x/512),
+                                              std::trunc(camera_y/512));
+            //prepare_the_maps(primary);
+            //std::vector<tuple_int> maps_to_draw=what_to_draw(primary);
+            SDL_RenderClear(grenderer);
 			if (e.type == SDL_QUIT)
 			{
 				quit = true;
@@ -293,7 +353,7 @@ int main(int argc, char* argv[])
 			switch (e.type)
 			{
 			case SDL_MOUSEBUTTONDOWN:
-				draw_everything(back, grass, all);
+				draw_everything(back, all);
 				switch (e.button.button)
 				{
 				case SDL_BUTTON_LEFT:
@@ -306,7 +366,7 @@ int main(int argc, char* argv[])
 				SDL_RenderPresent(grenderer);
 			case SDL_MOUSEBUTTONUP:
 				mousedown = false;
-				draw_everything(back, grass, all);
+				draw_everything(back, all);
 				if (mousemovedwhiledown == true)
 				{
 					//select units (
@@ -315,28 +375,32 @@ int main(int argc, char* argv[])
 				SDL_RenderPresent(grenderer);
 				break;
 			case SDL_MOUSEMOTION:
-				draw_everything(back, grass, all);
+				draw_everything(back, all);
 				if (mousedown == true)
 				{
 					int curx, cury;
 					SDL_GetMouseState(&curx, &cury);
-					SDL_Rect selectbox = { mousestartx,mousestarty,
+					SDL_Rect selectbox = { mousestartx ,mousestarty,
 											curx - mousestartx,cury - mousestarty };
-					//SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
 					SDL_RenderDrawRect(grenderer, &selectbox);
 					mousemovedwhiledown = true;
 				}
 				SDL_RenderPresent(grenderer);
 				break;
 			case SDL_KEYDOWN:
-				draw_everything(back, grass, all);
-				SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
+				draw_everything(back, all);
 				switch (e.key.keysym.sym)
 				{
 				case SDLK_UP:
 					std::cout << "UP";
 					break;
-				}
+                case SDLK_DOWN:
+                    break;
+                case SDLK_LEFT:
+                    break;
+                case SDLK_RIGHT:
+                    break;
+                }
 				break;
 			}
 		}

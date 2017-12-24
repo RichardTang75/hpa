@@ -72,6 +72,7 @@ void bresenham(tuple_set& in, int startx, int endx, int starty, int endy)
 		{
 			y = y + 1;
 			dist = dist - 2 * dx;
+            in.emplace(x, y);
 		}
 		dist = dist + 2 * dy;
 	}
@@ -81,8 +82,8 @@ void bresenham_expand(tuple_set& in, tuple_int& coord, float& angle)
 	int passed_x = std::get<0>(coord);
 	int passed_y = std::get<1>(coord);
 	int radius = 5; //small but noticeable protrusions. Many of them.
-	int circle_x = cos(angle) + passed_x;
-	int circle_y = sin(angle) + passed_y;
+	int circle_x = radius*cos(angle) + passed_x;
+	int circle_y = radius*sin(angle) + passed_y;
 	int startx = std::min(passed_x, circle_x);
 	int endx = std::max(passed_x, circle_x);
 	int starty = std::min(passed_y, circle_y);
@@ -95,10 +96,12 @@ void bresenham_expand(tuple_set& in, tuple_int& coord, float& angle)
 	{
 		tuple_int next = tuple_int(x, y);
 		tuple_set_expand(in, next);
-		while (dist > 0)
+		while (dist > 0 && dx != 0)
 		{
 			y = y + 1;
 			dist = dist - 2 * dx;
+            tuple_int next = tuple_int(x, y);
+            tuple_set_expand(in, next);
 		}
 		dist = dist + 2 * dy;
 	}

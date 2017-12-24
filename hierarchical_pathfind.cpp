@@ -330,7 +330,7 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
     return to_return;
 }
 
-node_retrieval node_entrances(int cluster_size, node_retrieval& sublevel_nodes, int coord_x_start, int coord_x_end, int coord_y_start, int coord_y_end, int original_cut_size)
+/*node_retrieval node_entrances(int cluster_size, node_retrieval& sublevel_nodes, int coord_x_start, int coord_x_end, int coord_y_start, int coord_y_end, int original_cut_size)
 //coord x_start should be in base coords, not the first level coords
 {
 	std::unordered_map<pf_node_key, pf_node, pf_node_key::hash> cluster_graph_nodes;
@@ -338,6 +338,7 @@ node_retrieval node_entrances(int cluster_size, node_retrieval& sublevel_nodes, 
 	std::unordered_map<pf_node_key, pf_node, pf_node_key::hash> sublevel_graph_nodes = sublevel_nodes.all_nodes;
 	std::unordered_map<local_node_key, std::vector<pf_node_key>, local_node_key::hash> sublevel_local_nodes=sublevel_nodes.local_nodes;
 }
+ */
 void subset_entrances(
 	tuple_int& which, vectormap& current_map, int cut_size, std::vector<int> costs, int from_right_size, int from_bottom_size,
 	std::vector<std::vector<int>>& vec_from_container, std::vector<std::vector<int>>& vec_my_container,

@@ -286,6 +286,8 @@ void step2 (const int& xStart, const int& xEnd,
 		tuple_set_union(neighbor, to_return);
 	}
 	std::uniform_int_distribution<int> size_chooser(size_min, size_max);
+    std::uniform_real_distribution<float> threshold(0, 1);
+    std::uniform_real_distribution<float> angle(0, (2*acos(-1)));
 	static thread_local std::mt19937 eng(seed);
 	int size_many = size_chooser(eng);
 	//size_many is the floor for how small the clumps are
@@ -306,21 +308,20 @@ void step2 (const int& xStart, const int& xEnd,
 	////when ligating, take into consideration climes
 	////threads can start new threads if enough cores
 	////eventually preprocess it to fewer nodes using visibility graph
-	//for (int i = 0; i < (size_many); ++i)
-	//{
-	//	for (tuple_int coord : to_return)
-	//	{
-	//		float temp_thresh = threshold(eng);
-	//		tuple_int temp_coord;
-	//		if (temp_thresh<.05)
-	//		{
-	//			direction_chosen = directions[direction_chooser(eng)];
-	//			snake_expand(to_return, coord, direction_chosen);
-	//		}
-	//	}
-	//	tuple_set_union(to_return, step);
-	//	step.clear();
-	//}
+	for (int i = 0; i < (size_many); ++i)
+	{
+		for (tuple_int coord : to_return)
+		{
+			float temp_thresh = threshold(eng);
+			if (temp_thresh<.05)
+			{
+				float angle_chosen = angle(eng);
+				bresenham_expand(to_return, coord, angle_chosen);
+			}
+		}
+		tuple_set_union(to_return, step);
+		step.clear();
+	}
 }
 
 void gen_terrain(const int& xStart, const int& xEnd,
@@ -540,13 +541,14 @@ to get one map, you get retrieve base maps and each of neighbor's maps. thus for
 
 //return tuple set forests, mountains, water, marsh, pass in by parameter+change neighbors
 //be sure not to call this for finished maps
+//be sure to redo seed generation. i can't remember what now, but it's important
 std::tuple<std::vector<tuple_set>, vectormap> map_controller
-															(	const int& map_x, const int& map_y,
-																const int& x_size, const int& y_size,
-																tuple_triple_map& created,
-																overflow_map& neighbors,
-																unsigned long long init_seed = 0,
-																int terrain_type = 0)
+(	const int& map_x, const int& map_y,
+    const int& x_size, const int& y_size,
+    tuple_triple_map& created,
+    overflow_map& neighbors,
+    unsigned long long init_seed = 0,
+    int terrain_type = 0)
 {
 	std::vector<tuple_int> additions = { tuple_int(-1,0),tuple_int(1,0),tuple_int(0,-1),tuple_int(1,0),
 		tuple_int(-1,-1),tuple_int(-1,1),tuple_int(1,1),tuple_int(1,-1) };
@@ -583,15 +585,14 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 	overflow_map msh_neighbors = get_valid_neighbors(map_x, map_y, Msh, neighbors);
 	std::vector<tuple_triple_map> triples = { fst_triple, mtn_triple, wtr_triple, msh_triple };
 	std::vector<overflow_map> overflows = { fst_neighbors, mtn_neighbors, wtr_neighbors, msh_neighbors };
-	retrieve_maps( map_x, map_y, Fst, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(fst_neighbors), std::ref(fst_triple), seeds[0]);
-	retrieve_maps( map_x, map_y, Mtn, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(mtn_neighbors), std::ref(mtn_triple), seeds[1]);
-	retrieve_maps( map_x, map_y, Wtr, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(wtr_neighbors), std::ref(wtr_triple), seeds[2]);
-	retrieve_maps( map_x, map_y, Msh, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(msh_neighbors), std::ref(msh_triple), seeds[3]);
-/*	gen_fst.join();
+    std::thread gen_fst(retrieve_maps, map_x, map_y, Fst, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(fst_neighbors), std::ref(fst_triple), seeds[0]);
+    std::thread gen_mtn (retrieve_maps, map_x, map_y, Mtn, 1, 2, 3, 5, 58, 86, 7, 10, std::ref(mtn_neighbors), std::ref(mtn_triple), seeds[1]);
+    std::thread gen_wtr (retrieve_maps, map_x, map_y, Wtr, 2, 3, 2, 4, 8, 16, 16, 24, std::ref(wtr_neighbors), std::ref(wtr_triple), seeds[2]);
+    std::thread gen_msh (retrieve_maps, map_x, map_y, Msh, 3, 5, 2, 4, 5, 10, 15, 18, std::ref(msh_neighbors), std::ref(msh_triple), seeds[3]);
+	gen_fst.join();
 	gen_mtn.join();
 	gen_wtr.join();
 	gen_msh.join();
- */
 	for (tuple_triple_map triple : triples)
 	{
 		for (auto triple_pair : triple)

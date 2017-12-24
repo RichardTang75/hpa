@@ -12,7 +12,8 @@
 #include <stdio.h>
 #include "typedef.hpp"
 #include "hierarchical_pathfind.hpp"
-#include <SDL.h>
+//#include <SDL.h>
+#include <SDL2/SDL.h>
 class unit
 {
 public:

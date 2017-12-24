@@ -7,13 +7,13 @@
 //
 
 #include "goodfunctions.hpp"
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL2/SDL.h>
+//#include <SDL_image/SDL2_image.h>
 #include "hierarchical_pathfind.hpp"
 #include "boost/functional.hpp"
 #include <iostream>
-//#include <SDL2/SDL.h>
-//#include <SDL2_image/SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2_image/SDL_image.h>
 class unit_modifier //perhaps experience n shit
 {
 
