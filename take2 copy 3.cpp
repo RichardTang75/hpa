@@ -25,8 +25,8 @@
 //globals can go back into main if I really need it
 int map_width=512;
 int map_height=512;
-int camera_x=256;
-int camera_y=256;
+float camera_x=0;
+float camera_y=0;
 std::vector<std::vector<int>> possible_move_costs=
 {
     {1,2,3,4,0}, //basic move cost-used by fire and metal
@@ -40,10 +40,12 @@ class back_text
 {
 public:
     back_text(int width, int height);
+    back_text(void);
     ~back_text();
     void free();
     void surface_processing(std::string path, tuple_set& to_add, std::string features="",int seed=0, float hurdle=.001);
     void simple_load(std::string path);
+    void load_background(tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors);
     void make_text(void);
     void render(int x,int y);
     int get_width();
@@ -54,6 +56,13 @@ private:
     SDL_Texture* f_texture=NULL;
     SDL_Surface* t_surf=IMG_Load("empty.png");
 };
+typedef std::unordered_map<tuple_int, back_text, boost::hash<tuple_int>> texture_storage;
+back_text::back_text()
+{
+    f_texture=NULL;
+    width=map_width;
+    height=map_height;
+}
 back_text::back_text(int set_width, int set_height)
 {
     f_texture=NULL;
@@ -84,6 +93,24 @@ void back_text::simple_load(std::string path)
     SDL_FreeSurface(t_surf);
     t_surf=NULL;
     t_surf=IMG_Load(path.c_str());
+}
+void back_text::load_background(tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors)
+{
+     std::tuple<std::vector<tuple_set>, vectormap> sets_map;
+     sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, created, neighbors);
+     std::vector<tuple_set> temp_map = std::get<0>(sets_map);
+     vectormap map = std::get<1>(sets_map);
+     tuple_set forest, mount, water, marsh;
+     forest = temp_map[0];
+     mount = temp_map[1];
+     water = temp_map[2];
+     marsh = temp_map[3];
+     simple_load("grass1t.png");
+     surface_processing("marsh1t.png", marsh);
+     surface_processing("forest1t.png", forest);
+     surface_processing("mount1t.png", mount);
+     surface_processing("water1t.png", water);
+     make_text();
 }
 void back_text::make_text()
 {
@@ -213,15 +240,6 @@ std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector
 	}
 	return selected;
 }
-/*
-const int& map_x, const int& map_y,
-const int& x_size, const int& y_size,
-const int& side_size,
-tuple_set& created,
-std::unordered_map< std::tuple<int, int, int>, std::vector<tuple_set>, boost::hash<std::tuple<int, int, int>>>& neighbors,
-unsigned long long init_seed = 0,
-int terrain_type = 0
-*/
 void load_background(back_text& back, tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors)
 {
 	std::tuple<std::vector<tuple_set>, vectormap> sets_map;
@@ -241,58 +259,72 @@ void load_background(back_text& back, tuple_int& retrieve, tuple_triple_map& cre
 	back.make_text();
 }
 //max of 4 at once
-void draw_everything(back_text& back, std::vector<unit>& all,
-                     tuple_int& primary)
+void draw_everything(std::vector<unit>& all,
+                     tuple_int& primary,
+                     texture_storage& draw_maps_storage)
 {
-	back.render(0, 0);
+    int draw_x=std::get<0>(primary)*map_width-camera_x;
+    int draw_y=std::get<1>(primary)*map_height-camera_y;
+    draw_maps_storage[primary].render(draw_x, draw_y);
 	SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
 	for (unit i : all)
 	{
 		i.render(grenderer);
 	}
     std::vector<tuple_int> to_draw;
-    if (camera_x-std::get<0>(primary)*512>256)
+    if (camera_x-std::get<0>(primary)*map_width>0)
     {
-        to_draw.push_back(std::make_tuple(std::get<0>(primary)+1,
-                                          std::get<1>(primary)));
+        to_draw.push_back(tuple_int(1,0));
     }
-    else if (camera_x-std::get<0>(primary)*512==256)
+    else if (camera_x-std::get<0>(primary)*map_width==0)
     {
         //this is meant to be nothing.
     }
     else
     {
-        to_draw.push_back(std::make_tuple(std::get<0>(primary)-1,
-                                          std::get<1>(primary)));
+        to_draw.push_back(tuple_int(-1,0));
     }
-    if (camera_y-std::get<1>(primary)*512>256)
+    if (camera_y-std::get<1>(primary)*map_height>0)
     {
-        to_draw.push_back(std::make_tuple(std::get<0>(primary),
-                                          std::get<1>(primary)+1));
+        to_draw.push_back(tuple_int(0,1));
     }
-    else if (camera_y-std::get<1>(primary)*512==256)
+    else if (camera_y-std::get<1>(primary)*map_height==0)
     {
         //this is also meant to be nothing.
     }
     else
     {
-        to_draw.push_back(std::make_tuple(std::get<0>(primary),
-                                          std::get<1>(primary)-1));
+        to_draw.push_back(tuple_int(0,-1));
     }
-}
-void draw_everything(back_text& back, std::vector<unit>& all)
-{
-    back.render(0, 0);
-    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
-    for (unit i : all)
+    if (to_draw.size()>1) //for diagonals
     {
-        i.render(grenderer);
+        to_draw.push_back(tuple_int(std::get<0>(to_draw[0])+std::get<0>(to_draw[1]),
+                                    std::get<1>(to_draw[0])+std::get<1>(to_draw[1])));
+    }
+    for (tuple_int next: to_draw)
+    {
+        tuple_int drawin = tuple_int((std::get<0>(next)+std::get<0>(primary)), (std::get<1>(next)+std::get<1>(primary)));
+        draw_x=std::get<0>(drawin)*map_width-camera_x;
+        draw_y=std::get<1>(drawin)*map_height-camera_y;
+        draw_maps_storage[drawin].render(draw_x,draw_y);
     }
 }
+//void draw_everything(back_text& back, std::vector<unit>& all)
+//{
+//    back.render(0, 0);
+//    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
+//    for (unit i : all)
+//    {
+//        i.render(grenderer);
+//    }
+//}
+//too far, free, reset? write to disk the vectormap? why didn't i just allow direct creation of texture from vectormaps.
+//threadpools?
 void prepare_the_maps(tuple_int primary,
                       tuple_set& finished,
                       overflow_map& neighbors,
-                      tuple_triple_map& created)
+                      tuple_triple_map& created,
+                      texture_storage& draw_maps_storage)
 {
     std::vector<tuple_int> first_dirs={
         tuple_int(-1,0), tuple_int(1,0),
@@ -301,13 +333,35 @@ void prepare_the_maps(tuple_int primary,
         tuple_int(-1,-1),tuple_int(-1,1),
         tuple_int(1,-1), tuple_int(1,1)
     };
+    if (finished.count(primary)==0)
+    {
+        back_text temp(512,512);
+        draw_maps_storage.insert(std::make_pair(primary, temp));
+        draw_maps_storage[primary].load_background(primary, created, neighbors);
+        finished.emplace(primary);
+    }
     for (tuple_int dir: first_dirs)
     {
         tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
                                         std::get<1>(primary)+std::get<1>(dir));
         if (finished.count(retrievin)==0)
         {
-            map_controller(std::get<0>(retrievin), std::get<1>(retrievin), map_width, map_height, created, neighbors);
+            back_text temp(512, 512);
+            draw_maps_storage.insert(std::make_pair(retrievin, temp));
+            draw_maps_storage[retrievin].load_background(retrievin, created, neighbors);
+            finished.emplace(retrievin);
+        }
+    }
+    for (tuple_int dir: second_dirs)
+    {
+        tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
+                                        std::get<1>(primary)+std::get<1>(dir));
+        if (finished.count(retrievin)==0)
+        {
+            back_text temp(512, 512);
+            draw_maps_storage.insert(std::make_pair(retrievin, temp));
+            draw_maps_storage[retrievin].load_background(retrievin, created, neighbors);
+            finished.emplace(retrievin);
         }
     }
 }
@@ -324,25 +378,27 @@ int main(int argc, char* argv[])
 	unit temp(tuple_int(256, 256), 10, 10, 10, 10, 10, 10, 0, 0, 100, 100, 100, tuple_int(-1, -1), common);
 	std::vector<unit> selected;
 	std::vector<unit> all{ temp };
-	back_text back(512, 512);
+    tuple_int primary=std::make_tuple(std::round(camera_x/512),
+                                      std::round(camera_y/512));
     tuple_triple_map created;
     overflow_map neighbors;
-    tuple_int init=tuple_int(0,0);
-	load_background(back, init, created, neighbors);
-	draw_everything(back, all);
+    texture_storage draw_maps_storage;
+    tuple_set finished;
+    prepare_the_maps(primary, finished, neighbors, created, draw_maps_storage);
+    draw_everything(all, primary, draw_maps_storage);
+//	back_text back(512, 512);
+//    tuple_int init=tuple_int(0,0);
+//	load_background(back, init, created, neighbors);
+//    draw_everything(back, all);
     SDL_RenderPresent(grenderer);
 	bool mousedown=false;
 	int mousestartx, mousestarty;
 	bool mousemovedwhiledown=false;
 	SDL_Event e;
-    std::vector<tuple_int> to_draw;
+    //map_stuff(<#int width#>, <#int height#>, <#vectormap &bigmap#>)
 	while (!quit) {
 		while (SDL_PollEvent(&e) != 0)
 		{
-            tuple_int primary=std::make_tuple(std::trunc(camera_x/512),
-                                              std::trunc(camera_y/512));
-            //prepare_the_maps(primary);
-            //std::vector<tuple_int> maps_to_draw=what_to_draw(primary);
             SDL_RenderClear(grenderer);
 			if (e.type == SDL_QUIT)
 			{
@@ -352,55 +408,63 @@ int main(int argc, char* argv[])
 			}
 			switch (e.type)
 			{
-			case SDL_MOUSEBUTTONDOWN:
-				draw_everything(back, all);
-				switch (e.button.button)
-				{
-				case SDL_BUTTON_LEFT:
-					SDL_GetMouseState(&mousestartx, &mousestarty);
-					std::cout << mousestartx << "," << mousestarty;
-					mousedown = true;
-					break;
-				}
-				break;
-				SDL_RenderPresent(grenderer);
-			case SDL_MOUSEBUTTONUP:
-				mousedown = false;
-				draw_everything(back, all);
-				if (mousemovedwhiledown == true)
-				{
-					//select units (
-					mousemovedwhiledown = false;
-				}
-				SDL_RenderPresent(grenderer);
-				break;
-			case SDL_MOUSEMOTION:
-				draw_everything(back, all);
-				if (mousedown == true)
-				{
-					int curx, cury;
-					SDL_GetMouseState(&curx, &cury);
-					SDL_Rect selectbox = { mousestartx ,mousestarty,
-											curx - mousestartx,cury - mousestarty };
-					SDL_RenderDrawRect(grenderer, &selectbox);
-					mousemovedwhiledown = true;
-				}
-				SDL_RenderPresent(grenderer);
-				break;
+//			case SDL_MOUSEBUTTONDOWN:
+//				    draw_everything(all, primary, draw_maps_storage);
+//				switch (e.button.button)
+//				{
+//				case SDL_BUTTON_LEFT:
+//					SDL_GetMouseState(&mousestartx, &mousestarty);
+//					std::cout << mousestartx << "," << mousestarty;
+//					mousedown = true;
+//					break;
+//				}
+//				break;
+//				SDL_RenderPresent(grenderer);
+//			case SDL_MOUSEBUTTONUP:
+//				mousedown = false;
+//				    draw_everything(all, primary, draw_maps_storage);
+//				if (mousemovedwhiledown == true)
+//				{
+//					//select units (
+//					mousemovedwhiledown = false;
+//				}
+//				SDL_RenderPresent(grenderer);
+//				break;
+//			case SDL_MOUSEMOTION:
+//				    draw_everything(all, primary, draw_maps_storage);
+//				if (mousedown == true)
+//				{
+//					int curx, cury;
+//					SDL_GetMouseState(&curx, &cury);
+//					SDL_Rect selectbox = { mousestartx ,mousestarty,
+//											curx - mousestartx,cury - mousestarty };
+//					SDL_RenderDrawRect(grenderer, &selectbox);
+//					mousemovedwhiledown = true;
+//				}
+//				SDL_RenderPresent(grenderer);
+//				break;
 			case SDL_KEYDOWN:
-				draw_everything(back, all);
 				switch (e.key.keysym.sym)
 				{
 				case SDLK_UP:
 					std::cout << "UP";
+                    camera_y=camera_y-8;
 					break;
                 case SDLK_DOWN:
+                    camera_y=camera_y+8;
                     break;
                 case SDLK_LEFT:
+                    camera_x=camera_x-8;
                     break;
                 case SDLK_RIGHT:
+                    camera_x=camera_x+8;
                     break;
                 }
+                tuple_int primary=std::make_tuple(std::round(camera_x/512),
+                                                  std::round(camera_y/512));
+                prepare_the_maps(primary, finished, neighbors, created, draw_maps_storage);
+                draw_everything(all, primary, draw_maps_storage);
+                SDL_RenderPresent(grenderer);
 				break;
 			}
 		}

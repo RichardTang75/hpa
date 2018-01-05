@@ -12,7 +12,7 @@
 #include <iostream>
 #include "country_controller.hpp"
 //
-void map_stuff(int width, int height, vectormap& bigmap)
+void map_stuff(int width, int height, vectormap& bigmap, tuple_set all_node_locs)
 {
 	std::vector<std::vector<int>> possible_move_costs =
 	{
@@ -25,6 +25,15 @@ void map_stuff(int width, int height, vectormap& bigmap)
 	int cut_size = 64;
 	std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> map_set = cut(bigmap, 0, 0, cut_size);
 	node_retrieval nodes = entrances(map_set, bigmap, cut_size, false, 0, 0, width / cut_size, height / cut_size, possible_move_costs);
+    // purely for visualization purposes
+    for (auto node_key: nodes.all_nodes)
+    {
+        if ((node_key.first).t_mobility==basic)
+        {
+            all_node_locs.emplace((node_key.first).location);
+        }
+    }
+    // purely for visualization purposes
 	tuple_int start = tuple_int(10, 10);
 	tuple_int end = tuple_int(510, 510);
 	path_with_cost path_and_cost = hierarchical_pathfind(end, start, basic, map_set, 1, cut_size, nodes);

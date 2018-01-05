@@ -20,6 +20,7 @@
 std::vector<int> terrain_costs{1,2,3,4,0};
 ////
 int MAX_DEPTH;
+//local nodes are nodes that are in a section, all nodes is every single node
 
 enum where{
     TOP, RIGHT, BOTTOM, LEFT
@@ -414,7 +415,7 @@ void subset_entrances(
 		//then build the edges
 		pf_node temp_node;
 		pf_node_key temp_node_key;
-		//shit need to convert back to global
+		//shit need to convert back to global coords
 		temp_node.location = mod_pos_entrances[i_from];
 		temp_node_key.location = temp_node.location;
 		temp_node.depth = depth;

@@ -9,6 +9,6 @@
 #ifndef test_init_hpp
 #define test_init_hpp
 
-void map_stuff (int width, int height, vectormap& bigmap);
+void map_stuff(int width, int height, vectormap& bigmap, tuple_set all_node_locs); 
 
 #endif /* test_init_hpp */

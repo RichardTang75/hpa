@@ -24,5 +24,4 @@ void tuple_set_union(tuple_set& in1, tuple_set& in2);
 void bresenham(tuple_set& in, int startx, int endx, int starty, int endy);
 void bresenham_expand(tuple_set& in, tuple_int& coord, float& angle);
 
-
 #endif /* terrain_hpp */
