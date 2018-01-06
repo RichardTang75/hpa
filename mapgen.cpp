@@ -109,7 +109,6 @@ inline void cardinal_emplacer(const int& xStart, const int& xEnd,
             for (int i=0; i<yoverflow; ++i)
             {
                 neighbors[North].emplace(tuple_int(round(startx+slope*i),512-i));
-                //std::cout<<"\n"<<(round(startx+slope*i))<<","<<(512-i);
             }
             break;
         }
@@ -179,24 +178,24 @@ inline void cardinal_emplacer(const int& xStart, const int& xEnd,
         }
     }
 }
-void step1(const int& xStart, const int& xEnd,
-	const int& yStart, const int& yEnd,
+void step1(const int& map_width, const int& map_height,
 	const int& howmany_min, const int& howmany_max,
 	const int& directions_min, const int& directions_max,
 	const int& length_min, const int& length_max,
-    tuple_set& to_return, std::vector<tuple_set>& neighbors,
+    const int& size_min, const int& size_max,
+    tuple_set& to_return,
 	unsigned seed = 0)
 {
 	static thread_local std::mt19937 eng(seed);
 	tuple_set to_union;
-	tuple_set step;
 	std::unordered_set<int> unacceptableX;
 	std::unordered_set<int> unacceptableY;
-	std::uniform_int_distribution<int> randX(xStart, xEnd);
-	std::uniform_int_distribution<int> randY(yStart, yEnd);
+	std::uniform_int_distribution<int> randX(0, map_width);
+	std::uniform_int_distribution<int> randY(0, map_height);
 	std::uniform_int_distribution<int> rand_many(howmany_min, howmany_max);
 	std::uniform_int_distribution<int> length_many(length_min, length_max);
 	std::uniform_int_distribution<int> directions_many(directions_min, directions_max);
+    std::uniform_int_distribution<int> size_chooser(size_min, size_max);
 	std::uniform_real_distribution<float> threshold(0, 1);
 	std::uniform_real_distribution<float> angle(0, (2*acos(-1)));
 	int how_many = rand_many(eng);
@@ -230,12 +229,6 @@ void step1(const int& xStart, const int& xEnd,
             cur_y = std::get<1>(coord);
 			end_x = cur_x+cos(angle_chosen)*radius;
 			end_y = cur_y+sin(angle_chosen)*radius;
-            int fin_card=cardinal_overflow(xStart, xEnd, yStart, yEnd, end_x, end_y);
-            if (fin_card != -1)
-            {
-                Cardinal actual_card= Cardinal(fin_card);
-                cardinal_emplacer(xStart, xEnd, yStart, yEnd, end_x, end_y, cur_x, cur_y, angle_chosen, actual_card, neighbors);
-            }
             bresenham(to_union, std::min(cur_x, end_x), std::max(cur_x, end_x),
 						std::min(cur_y, end_y), std::max(cur_y, end_y));
             //final step takes care of over the bounds from the tuple set
@@ -249,7 +242,7 @@ void step1(const int& xStart, const int& xEnd,
 		for (int n = 0; n<temp_many_directions; ++n)
 		{
 			float temp_thresh = threshold(eng);
-			if (temp_thresh<.01 and in_bounds(xStart, xEnd, yStart, yEnd, coord))
+			if (temp_thresh<.01)
 			{
                 int radius = length_many(eng);
                 angle_chosen = angle(eng);
@@ -257,12 +250,6 @@ void step1(const int& xStart, const int& xEnd,
                 cur_y = std::get<1>(coord);
                 end_x = cur_x+cos(angle_chosen)*radius;
                 end_y = cur_y+sin(angle_chosen)*radius;
-                int fin_card=cardinal_overflow(xStart, xEnd, yStart, yEnd, end_x, end_y);
-                if (fin_card != -1)
-                {
-                    Cardinal actual_card= Cardinal(fin_card);
-                    cardinal_emplacer(xStart, xEnd, yStart, yEnd, end_x, end_y, cur_x, cur_y, angle_chosen, actual_card, neighbors);
-                }
                 bresenham(to_union, std::min(cur_x, end_x), std::max(cur_x, end_x),
 							std::min(cur_y, end_y), std::max(cur_y, end_y));
 			}
@@ -270,346 +257,198 @@ void step1(const int& xStart, const int& xEnd,
 	}
 	tuple_set_union(to_return, to_union);
 	to_union.clear();
-}
-void step2 (const int& xStart, const int& xEnd,
-			const int& yStart, const int& yEnd, 
-			const int& size_min, const int& size_max,
-			const std::vector<tuple_set>& pert_neighbors,
-			tuple_set& to_return,
-			unsigned seed = 0)
-{
-	tuple_set step;
-	for (tuple_set neighbor : pert_neighbors)
-	{
-		tuple_set_union(to_return,neighbor);
-	}
-	std::uniform_int_distribution<int> size_chooser(size_min, size_max);
-    std::uniform_real_distribution<float> threshold(0, 1);
-    std::uniform_real_distribution<float> angle(0, (2*acos(-1)));
-	static thread_local std::mt19937 eng(seed);
-	int size_many = size_chooser(eng);
-	//size_many is the floor for how small the clumps are
-	//STEP IS TO AVOID HAVING TO HIT ALREADY HIT COORDS
-//	for (int i = 0; i < size_many; ++i)
-//	{
-//		for (tuple_int coord : to_return)
-//		{
-//			tuple_set_expand(step, coord);
-//		}
-//		tuple_set_union(to_return, step);
-//	}
-//	std::cout << to_return.size() << "\n";
-//	tuple_set_union(to_return, step);
-//	step.clear();
-//	////first make the lines
-//	////then fill
-//	////when ligating, take into consideration climes
-//	////threads can start new threads if enough cores
-//	////eventually preprocess it to fewer nodes using visibility graph
-//	for (int i = 0; i < (size_many); ++i)
-//	{
-//		for (tuple_int coord : to_return)
-//		{
-//			float temp_thresh = threshold(eng);
-//			if (temp_thresh<.05)
-//			{
-//				float angle_chosen = angle(eng);
-//				bresenham_expand(to_return, coord, angle_chosen);
-//			}
-//		}
-//		tuple_set_union(to_return, step);
-//		step.clear();
-//	}
-}
-/*
-void gen_terrain(const int& xStart, const int& xEnd,
-                 const int& yStart, const int& yEnd,
-                 const int& howmany_min, const int& howmany_max,
-                 const int& directions_min, const int& directions_max,
-                 const int& length_min,  const int& length_max,
-                 const int& size_min,    const int& size_max,
-                 tuple_set& to_return,
-                 unsigned seed = 0)
-{
-    static thread_local std::mt19937 eng(seed);
-    tuple_set to_union;
-    tuple_set step;
-    std::unordered_set<int> unacceptableX;
-    std::unordered_set<int> unacceptableY;
-    std::uniform_int_distribution<int> randX(xStart, xEnd);
-    std::uniform_int_distribution<int> randY(yStart, yEnd);
-    std::uniform_int_distribution<int> rand_many(howmany_min,howmany_max);
-    std::uniform_int_distribution<int> length_many(length_min,length_max);
-    std::uniform_int_distribution<int> directions_many(directions_min,directions_max);
-    std::uniform_int_distribution<int> direction_chooser(0,7);
-    std::uniform_int_distribution<int> size_chooser(size_min,size_max);
-    std::uniform_real_distribution<float> threshold(0,1);
-    std::vector<tuple_int> additions={tuple_int(-1,0),tuple_int(1,0),tuple_int(0,-1),tuple_int(1,0)};
-    int how_many=rand_many(eng);
-    tuple_int direction_chosen;
-    int temp_many_directions;
-    int tempX, tempY;
-    int d_x, d_y;
-    int cur_x, cur_y;
-    while (to_return.size() < how_many)
+    int size_many = size_chooser(eng);
+    for (int i = 0; i < size_many; ++i)
     {
-        tempX = randX(eng);
-        tempY = randY(eng);
-        if (unacceptableX.count(tempX) == 0 && unacceptableY.count(tempY) == 0)
+        for (tuple_int coord : to_return)
         {
-            to_return.emplace(std::tuple<int,int>(tempX, tempY));
-            for (int n = -5; n == 5; ++n)
-            {
-                unacceptableX.emplace(int(tempX + n));
-                unacceptableY.emplace(int(tempY + n));
-            }
+            tuple_set_expand(to_union, coord);
         }
+        tuple_set_union(to_return, to_union);
     }
-    for (tuple_int coord: to_return)
-    {
-        temp_many_directions=directions_many(eng);
-        for (int n=0;n<temp_many_directions;++n)
-        {
-            int temp_length=length_many(eng);
-            direction_chosen = directions[direction_chooser(eng)];
-            d_x=std::get<0>(direction_chosen);
-            d_y=std::get<1>(direction_chosen);
-            for (int i=0;i<temp_length;++i)
-            {
-                cur_x=std::get<0>(coord);
-                cur_y=std::get<1>(coord);
-                to_union.emplace(tuple_int(cur_x+(d_x*i),cur_y+(d_y*i)));
-            }
-        }
-    }
-    tuple_set_union(to_return,to_union);
+    //std::cout << to_return.size() << "\n";
+    tuple_set_union(to_return, to_union);
     to_union.clear();
-	//adding extra flair to prevent it from looking like it all radiates from one point
-    for (tuple_int coord: to_return)
+    ////first make the lines
+    ////then fill
+    ////when ligating, take into consideration climes
+    ////threads can start new threads if enough cores
+    ////eventually preprocess it to fewer nodes using visibility graph
+    for (int i = 0; i < (size_many); ++i)
     {
-        temp_many_directions=directions_many(eng);
-        for (int n=0;n<temp_many_directions;++n)
+        for (tuple_int coord : to_return)
         {
-            float temp_thresh=threshold(eng);
-            if (temp_thresh<.01)
-            {
-                int temp_length=length_many(eng);
-                direction_chosen = directions[direction_chooser(eng)];
-                d_x=std::get<0>(direction_chosen);
-                d_y=std::get<1>(direction_chosen);
-                for (int i=0;i<temp_length;++i)
-                {
-                    cur_x=std::get<0>(coord);
-                    cur_y=std::get<1>(coord);
-                    to_union.emplace(tuple_int(cur_x+(d_x*i),cur_y+(d_y*i)));
-                }
-            }
-        }
-    }
-    tuple_set_union(to_return,to_union);
-    to_union.clear();
-    //initialize stuff for step outside loop because otherwise it would be hard.
-    int size_many=size_chooser(eng);
-    //size_many is the floor for how small the clumps are
-    //STEP IS TO AVOID HAVING TO HIT ALREADY HIT COORDS
-    for (int i=0;i < size_many; ++i)
-    {
-        for (tuple_int coord: to_return)
-        {
-            tuple_set_expand(step,coord);
-        }
-		tuple_set_union(to_return, step);
-    }
-    std::cout<<to_return.size()<<"\n";
-    tuple_set_union(to_return,step);
-    step.clear();
-    for (int i=0;i < (size_many); ++i)
-    {
-        for (tuple_int coord: to_return)
-        {
-            float temp_thresh=threshold(eng);
-            tuple_int temp_coord;
+            float temp_thresh = threshold(eng);
             if (temp_thresh<.05)
             {
-                direction_chosen = directions[direction_chooser(eng)];
-                snake_expand(to_return,coord,direction_chosen);
+                float angle_chosen = angle(eng);
+                bresenham_expand(to_union, coord, angle_chosen);
             }
         }
-        tuple_set_union(to_return,step);
-        step.clear();
+        tuple_set_union(to_return, to_union);
+        to_union.clear();
     }
 }
-*/
-/*
-to do: fix seed generation for this part. introduce a way to generate multiple maps, add back keyboard commands for movin round.
-*/
-//remember to std::cout to ensure that passing by reference creates an entry
-void retrieve_maps(const int& map_x, const int& map_y, const int& terrain,
-	const int& howmany_min, const int& howmany_max,
-	const int& directions_min, const int& directions_max,
-	const int& length_min, const int& length_max,
-	const int& size_min, const int& size_max,
-	overflow_map& neighbors,
-	tuple_triple_map& created,
-	unsigned long long init_seed = 0)
+void step2(const int& map_x, const int& map_y, const int& terrain,
+           const int& map_width, const int& map_height,
+           tuple_triple_map& maps)
 {
-	std::vector<tuple_set> pert_neighbors;
-	tuple_set empty;
-	for (int i = 0; i<directions.size(); ++i)
-	{
-		tuple_int dir = directions[i];
-		int nearby_x = std::get<0>(dir) + map_x;
-		int nearby_y = std::get<1>(dir) + map_y;
-		if (neighbors.count(std::make_tuple(nearby_x, nearby_y, terrain)) == 1)
-		{
-			//start from NE, get the bottom-right diagonal overflow, put that in the NE position of the relevant neighbors
-			pert_neighbors.push_back(neighbors[std::make_tuple(nearby_x, nearby_y, terrain)][7 - i]);
-		}
-		else
-		{
-			//neighbors[Northwest], neighbors[North], etc from the enum cardinal
-			std::vector<tuple_set> neighbors_to_pass_in = { empty, empty, empty,
-				empty,		  empty,
-				empty, empty, empty };
-			//need no neigh, step1, receptacle to be return'd
-            std::tuple<int, int, int> holding=std::make_tuple(nearby_x,nearby_y, terrain);
-            created.insert(std::make_pair(holding, empty));
-			step1(0, 512, 0, 512, howmany_min, howmany_max, directions_min, directions_max,
-				length_min, length_max, created[holding], neighbors_to_pass_in, init_seed);
-			neighbors[std::make_tuple(nearby_x, nearby_y, terrain)] = neighbors_to_pass_in;
-			pert_neighbors.push_back(neighbors[holding][7 - i]);
-            std::cout<<pert_neighbors.size();
-		}
-	}
-	//remember to step 1 the initial one too
-	std::vector<tuple_set> neighbors_to_pass_in = { empty, empty, empty,
-		empty,		  empty,
-		empty, empty, empty };
-	if (created.count(std::make_tuple(map_x, map_y, terrain)) == 0)
-	{
-		step1(0, 512, 0, 512, howmany_min, howmany_max,
-			directions_min, directions_max,
-			length_min, length_max, created[std::make_tuple(map_x, map_y, terrain)], neighbors_to_pass_in, init_seed);
-	}
-	neighbors[std::make_tuple(map_x, map_y, terrain)] = neighbors_to_pass_in;
-	step2(0, 512, 0, 512, size_min, size_max, pert_neighbors, created[std::make_tuple(map_x, map_y, terrain)], init_seed);
+    std::tuple<int, int, int> here = std::make_tuple(map_x, map_y, terrain);
+    for (tuple_int dir: directions)
+    {
+        int dx=std::get<0>(dir);
+        int dy=std::get<1>(dir);
+        std::tuple<int, int, int> lookin = std::make_tuple(map_x+dx, map_y+dy, terrain);
+        tuple_set selected = maps[lookin];
+        for (tuple_int coord: selected)
+        {
+            int x_new=-1;
+            int y_new=-1;
+            if (dx==1)
+            {
+                if (std::get<0>(coord)<0)
+                {
+                    x_new = 513+std::get<0>(coord);
+                }
+            }
+            else if (dx==-1)
+            {
+                if (std::get<0>(coord)>512)
+                {
+                    x_new=std::get<0>(coord)-513;
+                }
+            }
+            if (dy==1)
+            {
+                if (std::get<1>(coord)<0)
+                {
+                    y_new=513+std::get<1>(coord);
+                }
+            }
+            else if (dy==-1)
+            {
+                if (std::get<1>(coord)>512)
+                {
+                    y_new=std::get<1>(coord)-513;
+                }
+            }
+            if (x_new != -1 && y_new != -1)
+            {
+                (maps[here]).emplace(tuple_int(x_new, y_new));
+            }
+            else if (x_new!= -1 && y_new == -1)
+            {
+                (maps[here]).emplace(tuple_int(x_new, std::get<1>(coord)));
+            }
+            else if (x_new ==-1 && y_new != -1)
+            {
+                (maps[here]).emplace(tuple_int(std::get<0>(coord), y_new));
+            }
+        }
+    }
 }
 
-//needed for threadin.
-tuple_triple_map get_valid_created(const int& map_x, const int& map_y, const int& terrain, tuple_triple_map& total_created)
+void get_full_map(const int& map_x, const int& map_y,
+                  const int& map_width, const int& map_height,
+                   tuple_triple_map& maps,
+                   tuple_set& processed,
+                  tuple_set& created,
+                  unsigned long long init_seed)
 {
-	tuple_triple_map to_return;
-	if (total_created.count(std::make_tuple(map_x, map_y, terrain)) == 1)
-	{
-		to_return[std::make_tuple(map_x, map_y, terrain)] = total_created[std::make_tuple(map_x, map_y, terrain)];
-	}
-	for (tuple_int dir : directions)
-	{
-		int get_x = map_x + std::get<0>(dir);
-		int get_y = map_y + std::get<1>(dir);
-		if (total_created.count(std::make_tuple(get_x, get_y, terrain)) == 1)
-		{
-			to_return[std::make_tuple(get_x, get_y, terrain)] = total_created[std::make_tuple(get_x, get_y, terrain)];
-		}
-	}
-	return to_return;
-}
+    std::random_device rd;
+    if (init_seed == 0)
+    {
+        init_seed =
+        (static_cast<unsigned long long>(std::chrono::high_resolution_clock::now().time_since_epoch().count()) +
+         static_cast<unsigned long long> (rd()));
+    }
+    std::vector<unsigned> seeds(36);
+    std::seed_seq seq
+    {
+        init_seed
+    };
+    seq.generate(seeds.begin(), seeds.end());
+    int seed_start=0;
+    if (processed.count(tuple_int(map_x, map_y))==0)
+    {
+        if (created.count(tuple_int(map_x, map_y))==0)
+        {
 
-overflow_map get_valid_neighbors(const int& map_x, const int& map_y, const int& terrain, overflow_map& all_neighbors)
-{
-	overflow_map to_return;
-	for (tuple_int dir : directions)
-	{
-		int get_x = map_x + std::get<0>(dir);
-		int get_y = map_y + std::get<1>(dir);
-		if (all_neighbors.count(std::make_tuple(get_x, get_y, terrain))==1)
-		{
-			to_return[std::make_tuple(get_x, get_y, terrain)] = all_neighbors[std::make_tuple(get_x, get_y, terrain)];
-		}
-	}
-	return to_return;
-}
+            std::thread gen_fst (step1, map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
+                                 std::ref(maps[std::make_tuple(map_x, map_y, Fst)]), seeds[seed_start+0]);
+            std::thread gen_mtn (step1, map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+                                 std::ref(maps[std::make_tuple(map_x, map_y, Mtn)]), seeds[seed_start+1]);
+            std::thread gen_wtr (step1, map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
+                                 std::ref(maps[std::make_tuple(map_x, map_y, Wtr)]), seeds[seed_start+2]);
+            std::thread gen_msh (step1, map_width, map_height, 3, 5, 2, 4, 5, 10, 15, 18,
+                                 std::ref(maps[std::make_tuple(map_x, map_y, Msh)]), seeds[seed_start+3]);
+            gen_fst.join();
+            gen_mtn.join();
+            gen_wtr.join();
+            gen_msh.join();
+            created.emplace(tuple_int(map_x, map_y));
+            seed_start=seed_start+4;
+        }
+        for (tuple_int dir: directions)
+        {
+            int desired_x=std::get<0>(dir)+map_x;
+            int desired_y=std::get<1>(dir)+map_y;
+            if (created.count(tuple_int(desired_x, desired_y))==0)
+            {
+                std::thread gen_fst (step1, map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
+                                     std::ref(maps[std::make_tuple(desired_x, desired_y, Fst)]), seeds[seed_start+0]);
+                std::thread gen_mtn (step1, map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+                                     std::ref(maps[std::make_tuple(desired_x, desired_y, Mtn)]), seeds[seed_start+1]);
+                std::thread gen_wtr (step1, map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
+                                     std::ref(maps[std::make_tuple(desired_x, desired_y, Wtr)]), seeds[seed_start+2]);
+                std::thread gen_msh (step1, map_width, map_height, 3, 5, 2, 4, 5, 10, 15, 18,
+                                     std::ref(maps[std::make_tuple(desired_x, desired_y, Msh)]), seeds[seed_start+3]);
+                gen_fst.join();
+                gen_mtn.join();
+                gen_wtr.join();
+                gen_msh.join();
+                created.emplace(tuple_int (desired_x, desired_y));
+                seed_start=seed_start+4;
 
-/*
-unordered_map of every square-> neighbors
-unordered map of every square->base map
-to get one map, you get retrieve base maps and each of neighbor's maps. thus for every one, you need 9 made.
-*/
+            }
+        }//thread here too
+        std::cout<<maps[std::make_tuple(map_x, map_y, Mtn)].size();
+        std::thread finish_fst (step2, map_x, map_y, Fst, map_width, map_height, std::ref(maps));
+        std::thread finish_mtn (step2, map_x, map_y, Mtn, map_width, map_height, std::ref(maps));
+        std::thread finish_wtr (step2, map_x, map_y, Wtr, map_width, map_height, std::ref(maps));
+        std::thread finish_msh (step2, map_x, map_y, Msh, map_width, map_height, std::ref(maps));
+        finish_fst.join();
+        finish_mtn.join();
+        finish_wtr.join();
+        finish_msh.join();
+        std::cout<<maps[std::make_tuple(map_x, map_y, Mtn)].size();
+        processed.emplace(map_x, map_y);
+    }
+}
 
 //return tuple set forests, mountains, water, marsh, pass in by parameter+change neighbors
 //be sure not to call this for finished maps
 //be sure to redo seed generation. i can't remember what now, but it's important
 std::tuple<std::vector<tuple_set>, vectormap> map_controller
 (	const int& map_x, const int& map_y,
-    const int& x_size, const int& y_size,
-    tuple_triple_map& created,
-    overflow_map& neighbors,
+    const int& map_width, const int& map_height,
+    tuple_triple_map& maps,
+    tuple_set& created,
+    tuple_set& processed,
     unsigned long long init_seed = 0,
     int terrain_type = 0)
 {
-	std::vector<tuple_int> additions = { tuple_int(-1,0),tuple_int(1,0),tuple_int(0,-1),tuple_int(1,0),
-		tuple_int(-1,-1),tuple_int(-1,1),tuple_int(1,1),tuple_int(1,-1) };
-	std::vector<tuple_int> overlap_additions = { tuple_int(-1,0),tuple_int(1,0),tuple_int(0,-1),tuple_int(1,0) };
-	std::random_device rd;
-	if (init_seed == 0)
-	{
-		init_seed =
-			(static_cast<unsigned long long>(std::chrono::high_resolution_clock::now().time_since_epoch().count()) +
-				static_cast<unsigned long long> (rd()));
-	}
-	std::vector<unsigned> seeds(4);
-	std::seed_seq seq
-	{
-		init_seed
-	};
-	seq.generate(seeds.begin(), seeds.end());
+    get_full_map(map_x, map_y, map_width, map_height, maps, processed, created, init_seed);
 	//tuple_set summed;
-	int cols = x_size;
-	int rows = y_size;
-	int x_start, x_end, y_start, y_end;
-	std::tie(x_start, x_end, y_start, y_end) = std::make_tuple(0, 512, 0, 512);
+	int cols = map_width;
+	int rows = map_height;
 	int init = 0; //maybe make this terrain type?
-	std::vector<unsigned char> image(4 * rows*cols);
-	std::vector<int> row(cols, init);
+   	std::vector<int> row(cols, init);
 	vectormap map(rows, row);
-	tuple_triple_map fst_triple = get_valid_created(map_x, map_y, Fst, created);
-	tuple_triple_map mtn_triple = get_valid_created(map_x, map_y, Mtn, created);
-	tuple_triple_map wtr_triple = get_valid_created(map_x, map_y, Wtr, created);
-	tuple_triple_map msh_triple = get_valid_created(map_x, map_y, Msh, created);
-	overflow_map fst_neighbors = get_valid_neighbors(map_x, map_y, Fst, neighbors);
-	overflow_map mtn_neighbors = get_valid_neighbors(map_x, map_y, Mtn, neighbors);
-	overflow_map wtr_neighbors = get_valid_neighbors(map_x, map_y, Wtr, neighbors);
-	overflow_map msh_neighbors = get_valid_neighbors(map_x, map_y, Msh, neighbors);
-    //std::thread gen_fst(retrieve_maps, map_x, map_y, Fst, 6, 12, 2, 4, 5, 10, 14, 18, std::ref(fst_neighbors), std::ref(fst_triple), seeds[0]);
-    std::thread gen_mtn (retrieve_maps, map_x, map_y, Mtn, 1, 2, 3, 5, 68, 86, 7, 10, std::ref(mtn_neighbors), std::ref(mtn_triple), seeds[1]);
-    //std::thread gen_wtr (retrieve_maps, map_x, map_y, Wtr, 2, 3, 2, 4, 8, 16, 16, 24, std::ref(wtr_neighbors), std::ref(wtr_triple), seeds[2]);
-    //std::thread gen_msh (retrieve_maps, map_x, map_y, Msh, 3, 5, 2, 4, 5, 10, 15, 18, std::ref(msh_neighbors), std::ref(msh_triple), seeds[3]);
-	//gen_fst.join();
-	gen_mtn.join();
-	//gen_wtr.join();
-	//gen_msh.join();
-    std::vector<tuple_triple_map> triples = { std::ref(fst_triple), std::ref(mtn_triple), std::ref(wtr_triple), std::ref(msh_triple) };
-    std::vector<overflow_map> overflows = { std::ref(fst_neighbors), std::ref(mtn_neighbors), std::ref(wtr_neighbors), std::ref(msh_neighbors) };
-	for (tuple_triple_map triple : triples)
-	{
-		for (auto triple_pair : triple)
-		{
-			std::tuple<int, int, int> key = triple_pair.first;
-			created[key] = triple[key];
-		}
-	}
-	for (overflow_map neigh : overflows)
-	{
-		for (auto triple_pair : neigh)
-		{
-			std::tuple<int, int, int> key = triple_pair.first;
-			neighbors[key] = neigh[key];
-		}
-	}
-	tuple_set forests = fst_triple[std::make_tuple(map_x, map_y, Fst)];
-	tuple_set mountains = mtn_triple[std::make_tuple(map_x, map_y, Mtn)];
-	tuple_set water = wtr_triple[std::make_tuple(map_x, map_y, Wtr)];
-	tuple_set marsh = msh_triple[std::make_tuple(map_x, map_y, Msh)];
+	tuple_set forests = maps[std::make_tuple(map_x, map_y, Fst)];
+	tuple_set mountains = maps[std::make_tuple(map_x, map_y, Mtn)];
+	tuple_set water = maps[std::make_tuple(map_x, map_y, Wtr)];
+	tuple_set marsh = maps[std::make_tuple(map_x, map_y, Msh)];
 	std::cout << "JOINED";
 	//ALWAYS DELETE ONE ON TOP;
 	std::vector<tuple_set> terrain_overlap_decider = { marsh, forests, mountains, water };
@@ -641,7 +480,7 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 		{
 			int tempX = std::get<0>(point);
 			int tempY = std::get<1>(point);
-			if (in_bounds(x_start, x_end, y_start, y_end, tempX, tempY) == true)
+			if (in_bounds(0, map_width, 0, map_height, tempX, tempY) == true)
 			{
 				map[tempY][tempX] = array_num;
 			}

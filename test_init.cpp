@@ -12,7 +12,7 @@
 #include <iostream>
 #include "country_controller.hpp"
 //
-void map_stuff(int width, int height, vectormap& bigmap, tuple_set all_node_locs)
+void map_stuff(int width, int height, vectormap& bigmap, tuple_set& all_node_locs)
 {
 	std::vector<std::vector<int>> possible_move_costs =
 	{

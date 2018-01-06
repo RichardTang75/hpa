@@ -15,10 +15,10 @@
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
-//#include <SDL.h>
-//#include <SDL_image.h>
-#include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
+//#include <SDL2/SDL.h>
+//#include <SDL2_image/SDL_image.h>
 #include "test_init.hpp"
 #include "country_controller.hpp"
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
@@ -45,7 +45,7 @@ public:
     void free();
     void surface_processing(std::string path, tuple_set& to_add, std::string features="",int seed=0, float hurdle=.001);
     void simple_load(std::string path);
-    void load_background(tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors);
+    void load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed);
     void make_text(void);
     void render(int x,int y);
     int get_width();
@@ -94,10 +94,10 @@ void back_text::simple_load(std::string path)
     t_surf=NULL;
     t_surf=IMG_Load(path.c_str());
 }
-void back_text::load_background(tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors)
+void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed)
 {
      std::tuple<std::vector<tuple_set>, vectormap> sets_map;
-     sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, created, neighbors);
+    sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, maps, created, processed);
      std::vector<tuple_set> temp_map = std::get<0>(sets_map);
      vectormap map = std::get<1>(sets_map);
      tuple_set forest, mount, water, marsh;
@@ -240,24 +240,6 @@ std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector
 	}
 	return selected;
 }
-void load_background(back_text& back, tuple_int& retrieve, tuple_triple_map& created, overflow_map& neighbors)
-{
-	std::tuple<std::vector<tuple_set>, vectormap> sets_map;
-    sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, created, neighbors);
-	std::vector<tuple_set> temp_map = std::get<0>(sets_map);
-	vectormap map = std::get<1>(sets_map);
-	tuple_set forest, mount, water, marsh;
-	forest = temp_map[0];
-	mount = temp_map[1];
-	water = temp_map[2];
-	marsh = temp_map[3];
-	back.simple_load("grass1t.png");
-	back.surface_processing("marsh1t.png", marsh);
-	back.surface_processing("forest1t.png", forest);
-	back.surface_processing("mount1t.png", mount);
-	back.surface_processing("water1t.png", water);
-	back.make_text();
-}
 //max of 4 at once
 void draw_everything(std::vector<unit>& all,
                      tuple_int& primary,
@@ -320,10 +302,10 @@ void draw_everything(std::vector<unit>& all,
 //}
 //too far, free, reset? write to disk the vectormap? why didn't i just allow direct creation of texture from vectormaps.
 //threadpools?
-void prepare_the_maps(tuple_int primary,
-                      tuple_set& finished,
-                      overflow_map& neighbors,
-                      tuple_triple_map& created,
+void prepare_the_maps(tuple_int& primary,
+                      tuple_set& processed,
+                      tuple_set& created,
+                      tuple_triple_map& maps,
                       texture_storage& draw_maps_storage)
 {
     std::vector<tuple_int> first_dirs={
@@ -333,35 +315,32 @@ void prepare_the_maps(tuple_int primary,
         tuple_int(-1,-1),tuple_int(-1,1),
         tuple_int(1,-1), tuple_int(1,1)
     };
-    if (finished.count(primary)==0)
+    if (processed.count(primary)==0)
     {
         back_text temp(512,512);
         draw_maps_storage.insert(std::make_pair(primary, temp));
-        draw_maps_storage[primary].load_background(primary, created, neighbors);
-        finished.emplace(primary);
+        draw_maps_storage[primary].load_background(primary, maps, created, processed);
     }
     for (tuple_int dir: first_dirs)
     {
         tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
                                         std::get<1>(primary)+std::get<1>(dir));
-        if (finished.count(retrievin)==0)
+        if (processed.count(retrievin)==0)
         {
             back_text temp(512, 512);
             draw_maps_storage.insert(std::make_pair(retrievin, temp));
-            draw_maps_storage[retrievin].load_background(retrievin, created, neighbors);
-            finished.emplace(retrievin);
+            draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
         }
     }
     for (tuple_int dir: second_dirs)
     {
         tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
                                         std::get<1>(primary)+std::get<1>(dir));
-        if (finished.count(retrievin)==0)
+        if (processed.count(retrievin)==0)
         {
             back_text temp(512, 512);
             draw_maps_storage.insert(std::make_pair(retrievin, temp));
-            draw_maps_storage[retrievin].load_background(retrievin, created, neighbors);
-            finished.emplace(retrievin);
+            draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
         }
     }
 }
@@ -380,11 +359,11 @@ int main(int argc, char* argv[])
 	std::vector<unit> all{ temp };
     tuple_int primary=std::make_tuple(std::round(camera_x/512),
                                       std::round(camera_y/512));
-    tuple_triple_map created;
-    overflow_map neighbors;
+    tuple_triple_map maps;
     texture_storage draw_maps_storage;
-    tuple_set finished;
-    prepare_the_maps(primary, finished, neighbors, created, draw_maps_storage);
+    tuple_set processed;
+    tuple_set created;
+    prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
     draw_everything(all, primary, draw_maps_storage);
 //	back_text back(512, 512);
 //    tuple_int init=tuple_int(0,0);
@@ -462,7 +441,7 @@ int main(int argc, char* argv[])
                 }
                 tuple_int primary=std::make_tuple(std::round(camera_x/512),
                                                   std::round(camera_y/512));
-                prepare_the_maps(primary, finished, neighbors, created, draw_maps_storage);
+                prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
                 draw_everything(all, primary, draw_maps_storage);
                 SDL_RenderPresent(grenderer);
 				break;

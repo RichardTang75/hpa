@@ -12,11 +12,11 @@
 #include "typedef.hpp"
 
 std::tuple<std::vector<tuple_set>, vectormap> map_controller
-(const int& map_x, const int& map_y,
-    const int& x_size, const int& y_size,
-    tuple_triple_map& created,
-    overflow_map& neighbors,
-    unsigned long long init_seed = 0,
-    int terrain_type = 0);
-
+(	const int& map_x, const int& map_y,
+ const int& map_width, const int& map_height,
+ tuple_triple_map& maps,
+ tuple_set& created,
+ tuple_set& processed,
+ unsigned long long init_seed = 0,
+ int terrain_type = 0);
 #endif /* mapgen_h */
