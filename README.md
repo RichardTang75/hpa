@@ -7,6 +7,6 @@ Implemented hierarchical pathfinding (map preprocessing) from a paper [https://w
 Utilized multithreading for both the terrain generation and the preprocessing. 
 
 Example picture of seamless generation.
-![[https://github.com/RichardTang75/hpa/blob/update/seamless.png]]
+(seamless.png)
 
 In progress.
