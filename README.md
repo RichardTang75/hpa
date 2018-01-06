@@ -6,7 +6,7 @@ Used SDL to modify and draw pictures. Involved SDL pixel access to create a kind
 Implemented hierarchical pathfinding (map preprocessing) from a paper [https://webdocs.cs.ualberta.ca/~mmueller/ps/hpastar.pdf]. 
 Utilized multithreading for both the terrain generation and the preprocessing. 
 
-Example picture of seamless generation.
-![wat](seamless.png)
+Example picture of seamless generation. Four different maps are being displayed here, as evidenced by the slight discrepancies near the top left. There are still some problems to be worked out, but it shows the gist of the idea.
+![Seamless attempt](seamless.png)
 
 In progress.
