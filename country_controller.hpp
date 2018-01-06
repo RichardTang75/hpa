@@ -14,7 +14,7 @@
 #include "hierarchical_pathfind.hpp"
 //#include <SDL.h>
 #include <SDL2/SDL.h>
-class unit
+class unit 
 {
 public:
 	unit(tuple_int start, int speed, int finesse, int power, int armr, int rng, int disc, int end_per_dmg, int mor_per_dmg,
@@ -39,7 +39,6 @@ private:
 	float percent_x, percent_y;
 	tuple_int to;
 	path_with_cost current_path;
-	//int new_move_count=5; do i need this with HPA?
 	int reform_count;
 	std::vector<int> t_mobility;
 };

@@ -106,36 +106,6 @@ void bresenham_expand(tuple_set& in, tuple_int& coord, float& angle)
 		dist = dist + 2 * dy;
 	}
 }
-void array_img(std::vector<std::vector<int>>& array,std::vector<unsigned char>& img,
-               const int& rows, const int& cols, int terrain=0)
-{
-    std::vector<unsigned char> color0;
-    std::vector<unsigned char> color1;
-    std::vector<unsigned char> color2;
-    std::vector<unsigned char> color3;
-    std::vector<unsigned char> color4;
-    std::vector<std::vector<unsigned char>> colors;
-    //0=grass, 1=forest, 2=marsh, 3=mount, 4=water
-    if (terrain==0)
-    {
-        color0={179,235,75,255};
-        color1={42,97,24,255};
-        color2={85,107,47,255};
-        color3={122,106,61,255};
-        color4={26,130,172,255};
-    }
-    colors={color0,color1,color2,color3,color4};
-    for (int row = 0; row < rows; ++row)
-    {
-        for (int col = 0; col < cols; ++col)
-        {
-            img[4*row*cols+4*col]=colors[array[row][col]][0];
-            img[4*row*cols+4*col+1]=colors[array[row][col]][1];
-            img[4*row*cols+4*col+2]=colors[array[row][col]][2];
-            img[4*row*cols+4*col+3]=colors[array[row][col]][3];
-        }
-    }
-}
 std::tuple<int,int,int,int> det_bounds(const int& x_size,
                                        const int& y_size,
                                        const int& side_size,
@@ -166,7 +136,7 @@ std::tuple<int,int,int,int> det_bounds(const int& x_size,
     
 }
 
-void print_tuple(tuple_set toprint)
+void print_tuple(tuple_set toprint) 
 {
     for (tuple_int tup : toprint)
     {

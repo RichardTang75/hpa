@@ -16,7 +16,6 @@
 #include <SDL2_image/SDL_image.h>
 class unit_modifier //perhaps experience n shit
 {
-
 };
 class unit
 {
@@ -82,7 +81,6 @@ void unit::set_move_target(tuple_int& to, node_retrieval& nodes, std::unordered_
 	if (dist_squared(to, current_move_target) > 100 or (new_move_count == 0))
 	{
 		tuple_int from = tuple_int(x, y);
-		current_path = hierarchical_pathfind(to, from, t_mobility, mapset, max_depth, cut_size, nodes);
 	}*/
 	tuple_int from = tuple_int(x, y);
 	current_path = hierarchical_pathfind(to, from, t_mobility, mapset, max_depth, cut_size, nodes);
@@ -197,7 +195,6 @@ private:
     int mil_buildup, econ_buildup, dipl_buildup;
     int information;  //economic and military information. are they expanding, are they known, how much do they have, are they building up militarily or economically, are they trustworthy
     int trustworthiness;
-    
 };
 class army_controller{
     //more units under attack, longer it takes to give orders, induces penalty if all suddenly get attacked
