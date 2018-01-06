@@ -11,7 +11,7 @@
 #include "hierarchical_pathfind.hpp"
 #include <iostream>
 #include "country_controller.hpp"
-//
+//warning incredibly cpu intensive :l
 void map_stuff(int width, int height, vectormap& bigmap, tuple_set& all_node_locs)
 {
 	std::vector<std::vector<int>> possible_move_costs =
@@ -49,6 +49,7 @@ void map_stuff(int width, int height, vectormap& bigmap, tuple_set& all_node_loc
         ++count;
         int x=std::get<0>(std::get<0>(path_and_cost[i]));
         int y=std::get<1>(std::get<0>(path_and_cost[i]));
+        all_node_locs.emplace(x,y);
 		std::cout << "\n"  << x << "," << y;
     }
 }
