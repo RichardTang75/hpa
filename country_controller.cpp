@@ -11,7 +11,7 @@
 #include "hierarchical_pathfind.hpp"
 #include "boost/functional.hpp"
 #include <iostream>
-#ifdef WIN32
+#ifdef _WIN32
 #include <SDL.h>
 #include <SDL_image.h>
 #else

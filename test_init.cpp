@@ -23,7 +23,7 @@ void map_stuff(int width, int height, vectormap& bigmap, tuple_set& all_node_loc
 	};
 	std::vector<int> basic = { 1,2,3,4,0 };
 	int cut_size = 64;
-	std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> map_set = cut(bigmap, 0, 0, cut_size);
+	std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> map_set = cut(bigmap, width, height, cut_size);
 	node_retrieval nodes = entrances(map_set, bigmap, cut_size, false, 0, 0, width / cut_size, height / cut_size, possible_move_costs);
     // purely for visualization purposes
     for (auto node_key: nodes.all_nodes)

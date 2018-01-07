@@ -28,6 +28,7 @@ enum where{
 
 struct node_queue
 {
+	pf_node where_from;
     pf_node next_stop;
     float cost_to_here;
     float estimated_cost_to_there;
@@ -142,7 +143,7 @@ std::vector<std::tuple<int,int,int>> cheapest(std::vector<int>& vec_terrain_cost
                     {
                         bestcost=currentcost;
                         best.clear();
-                        best.push_back(std::tuple<int, int, int>(j,checks+j,bestcost));
+						best.push_back(std::tuple<int, int, int>(j, checks + j, bestcost));
                     }
                     else if (currentcost==bestcost)
                     {
@@ -187,149 +188,37 @@ std::vector<std::tuple<int,int,int>> cheapest(std::vector<int>& vec_terrain_cost
     return best;
 };
 //assumes a square map divisible by 8 or 16, preferably twice
-std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> cut(vectormap& to_cut, int x_begin,
-                                                                   int y_begin, int cut_size)
-//to_return.
+std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> cut(vectormap& to_cut, int map_width,
+	int map_height, int cut_size)
+	//to_return.
 {
-    std::vector<int> row(cut_size);
-    std::vector<int> temprow(cut_size);
-    vectormap tempmap(cut_size,row);
-    std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> to_return;
-    for (int ystart=y_begin; ystart<(y_begin+to_cut.size()); ystart+=cut_size){
-        for (int xstart=x_begin; xstart<(to_cut[0].size()+x_begin); xstart+=cut_size)
-        {
-            for (int j=ystart; j<(ystart+cut_size);++j)
-            {
-                for (int i=xstart; i<(xstart+cut_size);++i)
-                {
-                    int index=(i-xstart);
-                    temprow[index];
-                }
-                int index=(j-ystart);
-                tempmap[index]=temprow;
-            }
-            //ystart/cut_size=y emplacement, xstart/cut_size=x emplacement
-            to_return[tuple_int(xstart/cut_size,ystart/cut_size)]=tempmap;
-        }
-    }
-    return to_return;
-}
-//if space is an issue, just provide the nodes when asked
-path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
-                                std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>>& base_map_set,
-                                std::unordered_map<pf_node_key, pf_node,pf_node_key::hash>& all_nodes,
-                                int cut_size, int& depth)
-{
-    std::priority_queue<node_queue,std::vector<node_queue>,distcomp> open_list;
-    std::unordered_set<tuple_int,boost::hash<tuple_int>> open_dupls;
-    std::unordered_set<tuple_int,boost::hash<tuple_int>> closed_list;
-    std::unordered_map<pf_node,pf_node,pf_node::hash> visits;
-    path_with_cost to_return;
-    path_with_cost other_stuff;
-    node_queue temp;
-    node_queue next;
-    pf_node current=start;
-    pf_node previous;
-    pf_node path;
-    bool success=false;
-    while (success==false)
-    {
-        if (current.location==to)
-        {
-            success=true;
-            path=previous;
-        }
-        else if(which_map(current.location,depth,cut_size)==which_map(to,depth,cut_size))
-        {
-            int new_depth=depth-1;
-			if (new_depth == 0)
+	std::vector<int> row(cut_size);
+	vectormap tempmap(cut_size, row);
+	std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> to_return;
+	for (int submap_x = 0; submap_x < (map_width / cut_size); ++submap_x)
+	{
+		for (int submap_y = 0; submap_y < (map_height / cut_size); ++submap_y)
+		{
+			int x_begin = submap_x*cut_size;
+			int y_begin = submap_y*cut_size;
+			//#1 should be 0
+			int col = -1;
+			for (int x = x_begin; x<(x_begin + cut_size); ++x)
 			{
-				tuple_int a_star_map = which_map(to, new_depth + 1, cut_size);
-				to_return = a_pathfind_controller(base_map_set[a_star_map], current.location, to, start.t_mobility, std::get<0>(a_star_map)*cut_size, std::get<1>(a_star_map)*cut_size);
-				success = true;
+				++col;
+				int row = -1;
+				for (int y = y_begin; y<(y_begin + cut_size); ++y)
+				{
+					++row;
+					tempmap[row][col] = to_cut[y][x];
+				}
 			}
-			else
-			{
-				pf_node_key new_start_key;
-				new_start_key.depth = (new_depth);
-				new_start_key.location = current.location;
-				new_start_key.t_mobility = current.t_mobility;
-				pf_node new_start = all_nodes[new_start_key];
-				to_return = pf_node_pathfind(new_start, to, base_map_set, all_nodes, cut_size, (new_depth));
-				success = true;
-			}
-        }
-        else if(open_list.size()==0){
-            for (int edge_i=0; edge_i<current.associated_edges.size(); ++edge_i)
-            {
-                pf_edge waypoint=current.associated_edges[edge_i];
-                temp.next_stop=all_nodes[waypoint.key_to];
-                if (closed_list.count(temp.next_stop.location)==0 && open_dupls.count(temp.next_stop.location) == 0)
-                {
-					temp.cost_to_here = waypoint.cost;
-                    temp.estimated_cost_to_there=calc_cost(temp.next_stop.location,to);
-                    open_dupls.emplace(temp.next_stop.location);
-                    open_list.push(temp);
-                }
-            }
-            closed_list.emplace(current.location);
-            previous=current;
-            if (open_list.size()==0)
-            {
-                return to_return;
-            }
-        }
-        else
-        {
-            next=open_list.top();
-            open_list.pop();
-            current=next.next_stop;
-            visits[current]=previous;			
-            float cost_so_far=next.cost_to_here;
-            for (int edge_i=0; edge_i<current.associated_edges.size(); ++edge_i)
-            {
-                pf_edge waypoint=current.associated_edges[edge_i];
-                temp.next_stop=all_nodes[waypoint.key_to];
-				//std::cout << "\nyo this is" << std::get<0>(current.location) << "," << std::get<1>(current.location);
-				//std::cout << "||" << waypoint.path.size()<<"||";
-				//std::cout <<std::get<0>(temp.next_stop.location) << "," << std::get<1>(temp.next_stop.location);
-                if (closed_list.count(temp.next_stop.location)==0 && open_dupls.count(temp.next_stop.location) == 0)
-                {
-                    temp.cost_to_here=waypoint.cost+cost_so_far;
-                    temp.estimated_cost_to_there=calc_cost(temp.next_stop.location,to);
-                    open_dupls.emplace(temp.next_stop.location);
-                    open_list.push(temp);
-                }
-            }
-            closed_list.emplace(current.location);
-            previous=current;
-        }
-    }
-    path=previous;
-    pf_node path_next;
-    path_next=visits[path];
-    for (pf_edge edge:path.associated_edges){
-        if (all_nodes[edge.key_to]==path_next)
-        {
-            to_return.insert(to_return.end(),edge.path.rbegin(), edge.path.rend());
-			break;
-        }
-    }
-    while (!(path == start)) //checkmate.
-    {
-        path=path_next;
-        path_next=visits[path];
-        for (pf_edge edge:path.associated_edges){
-            if (all_nodes[edge.key_to]==path_next)
-            {
-				//std::cout << "\nYo watup" << std::get<0>(path.location) << "," << std::get<1>(path.location) << ":" << edge.path.size() << "||" << std::get<0>(path_next.location) << "," << std::get<1>(path_next.location);
-                to_return.insert(to_return.end(),edge.path.rbegin(), edge.path.rend());
-                break;
-            }
-        }
-    }
-    return to_return;
+			to_return[tuple_int(submap_x, submap_y)] = tempmap;
+		}
+	}
+	return to_return;
 }
+
 
 /*node_retrieval node_entrances(int cluster_size, node_retrieval& sublevel_nodes, int coord_x_start, int coord_x_end, int coord_y_start, int coord_y_end, int original_cut_size)
 //coord x_start should be in base coords, not the first level coords
@@ -358,6 +247,7 @@ void subset_entrances(
 		std::vector<int> fromvec_comp = vec_from_container[i];
 		if (fromvec_comp.size() == 0)
 		{
+			//not here, nonexistent, i.e. edges
 			continue;
 		}
 		std::vector<std::tuple<int, int, int>> possible_entrances = cheapest(costs, myvec_comp, fromvec_comp);
@@ -562,7 +452,7 @@ node_retrieval entrances(std::unordered_map<tuple_int, vectormap, boost::hash<tu
             {
                 if (map_set.count(nearby)==1)
                 {
-                    from_bottom=get_edge(map_set[nearby],where::RIGHT,notmine);
+                    from_bottom=get_edge(map_set[nearby],where::BOTTOM,notmine);
                 }
             }
         }
@@ -651,6 +541,125 @@ pf_node closest_pf_node(tuple_int& where_to, tuple_int& where_from, vectormap& w
     }
     return best;
 }
+//one day i shall return and make this more readable.
+path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
+	std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& base_map_set,
+	std::unordered_map<pf_node_key, pf_node, pf_node_key::hash>& all_nodes,
+	int cut_size, int& depth)
+{
+	std::priority_queue<node_queue, std::vector<node_queue>, distcomp> open_list;
+	std::unordered_set<tuple_int, boost::hash<tuple_int>> open_dupls;
+	std::unordered_set<tuple_int, boost::hash<tuple_int>> closed_list;
+	std::unordered_map<pf_node, pf_node, pf_node::hash> visits;
+	path_with_cost to_return;
+	path_with_cost other_stuff;
+	node_queue temp;
+	node_queue next;
+	pf_node current = start;
+	pf_node previous;
+	pf_node path;
+	bool success = false;
+	while (success == false)
+	{
+		if (current.location == to)
+		{
+			success = true;
+			path = previous;
+		}
+		else if (which_map(current.location, depth, cut_size) == which_map(to, depth, cut_size))
+		{
+			int new_depth = depth - 1;
+			if (new_depth == 0)
+			{
+				tuple_int a_star_map = which_map(to, new_depth + 1, cut_size);
+				to_return = a_pathfind_controller(base_map_set[a_star_map], current.location, to, start.t_mobility, std::get<0>(a_star_map)*cut_size, std::get<1>(a_star_map)*cut_size);
+				success = true;
+			}
+			else
+			{
+				pf_node_key new_start_key;
+				new_start_key.depth = (new_depth);
+				new_start_key.location = current.location;
+				new_start_key.t_mobility = current.t_mobility;
+				pf_node new_start = all_nodes[new_start_key];
+				to_return = pf_node_pathfind(new_start, to, base_map_set, all_nodes, cut_size, (new_depth));
+				success = true;
+			}
+		}
+		else if (open_list.size() == 0) {
+			for (int edge_i = 0; edge_i<current.associated_edges.size(); ++edge_i)
+			{
+				pf_edge waypoint = current.associated_edges[edge_i];
+				temp.where_from = current;
+				temp.next_stop = all_nodes[waypoint.key_to];
+				if (closed_list.count(temp.next_stop.location) == 0 && open_dupls.count(temp.next_stop.location) == 0)
+				{
+					temp.cost_to_here = waypoint.cost;
+					temp.estimated_cost_to_there = calc_cost(temp.next_stop.location, to);
+					open_dupls.emplace(temp.next_stop.location);
+					open_list.push(temp);
+				}
+			}
+			closed_list.emplace(current.location);
+			previous = current;
+			if (open_list.size() == 0)
+			{
+				return to_return;
+			}
+		}
+		else
+		{
+			next = open_list.top();
+			open_list.pop();
+			current = next.next_stop;
+			visits[current] = next.where_from;
+			float cost_so_far = next.cost_to_here;
+			for (int edge_i = 0; edge_i<current.associated_edges.size(); ++edge_i)
+			{
+				pf_edge waypoint = current.associated_edges[edge_i];
+				temp.where_from = current;
+				temp.next_stop = all_nodes[waypoint.key_to];
+				//these lines have been too useful to delete.
+				//std::cout << "\nyo this is" << std::get<0>(current.location) << "," << std::get<1>(current.location);
+				//std::cout << "||" << waypoint.path.size()<<"||";
+				//std::cout <<std::get<0>(temp.next_stop.location) << "," << std::get<1>(temp.next_stop.location);
+				if (closed_list.count(temp.next_stop.location) == 0 && open_dupls.count(temp.next_stop.location) == 0)
+				{
+					temp.cost_to_here = waypoint.cost + cost_so_far;
+					temp.estimated_cost_to_there = calc_cost(temp.next_stop.location, to);
+					open_dupls.emplace(temp.next_stop.location);
+					open_list.push(temp);
+				}
+			}
+			closed_list.emplace(current.location);
+			previous = current;
+		}
+	}
+	path = previous;
+	pf_node path_next;
+	path_next = visits[path];
+	for (pf_edge edge : path.associated_edges) {
+		if (all_nodes[edge.key_to] == path_next)
+		{
+			to_return.insert(to_return.end(), edge.path.rbegin(), edge.path.rend());
+			break;
+		}
+	}
+	while (!(path == start)) //checkmate.
+	{
+		path = path_next;
+		path_next = visits[path];
+		for (pf_edge edge : path.associated_edges) {
+			if (all_nodes[edge.key_to] == path_next)
+			{
+				//std::cout << "\nYo watup" << std::get<0>(path.location) << "," << std::get<1>(path.location) << ":" << edge.path.size() << "||" << std::get<0>(path_next.location) << "," << std::get<1>(path_next.location);
+				to_return.insert(to_return.end(), edge.path.rbegin(), edge.path.rend());
+				break;
+			}
+		}
+	}
+	return to_return;
+}
 path_with_cost hierarchical_pathfind(tuple_int& to, tuple_int& from,std::vector<int>& movecosts,
                                     std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>>& mapset,
                                      int max_depth, int cut_size, node_retrieval& every_node_map)
@@ -662,27 +671,31 @@ path_with_cost hierarchical_pathfind(tuple_int& to, tuple_int& from,std::vector<
 	path_with_cost beginning;
     pf_node closest;
     pf_node previous;
-    int deepest_depth=0;
-    for (int i=1; i<=max_depth; ++i)
-    {
-        closest=closest_pf_node(to,from,mapset[which_map(to,i,cut_size)],i, cut_size, movecosts,every_node_map);
-        if (which_map(closest.location,i,cut_size)==which_map(to,i,cut_size))
-        {
-            break;
-        }
-        if (i==1)
-        {
-            to_add=a_pathfind_controller(mapset[which_map(from,1,cut_size)], from, closest.location, movecosts);
-        }
-        else
-        {
-            to_add=pf_node_pathfind(previous, closest.location, mapset, all_nodes, cut_size, i);
-        }
-        previous=closest;
-        to_return.insert(to_return.end(),to_add.rbegin(),to_add.rend());
-        deepest_depth=i;
-    }
-    to_add=pf_node_pathfind(previous,to,mapset,all_nodes,cut_size,deepest_depth);
+	//getting to closest node for the current depth?
+	int deepest_depth = 0;
+	for (int i = 1; i <= max_depth; ++i)
+	{
+		closest = closest_pf_node(to, from, mapset[which_map(to, i, cut_size)], i, cut_size, movecosts, every_node_map);
+		if (which_map(closest.location, i, cut_size) == which_map(to, i, cut_size))
+		{
+			break;
+		}
+		//gotta get to closest_node for the first level
+		if (i == 1)
+		{
+			to_add = a_pathfind_controller(mapset[which_map(from, 1, cut_size)], from, closest.location, movecosts);
+		}
+		//gets to closest_node for the next levels
+		else
+		{
+			to_add = pf_node_pathfind(previous, closest.location, mapset, all_nodes, cut_size, i);
+		}
+		previous = closest;
+		to_return.insert(to_return.end(), to_add.rbegin(), to_add.rend());
+		deepest_depth = i;
+	}
+	to_add = pf_node_pathfind(previous, to, mapset, all_nodes, cut_size, deepest_depth);
+	std::cout << to_add.size();
     to_return.insert(to_return.end(),to_add.rbegin(),to_add.rend());
 	std::reverse(to_return.begin(), to_return.end());
     //go to closest then go up, then go down if same sector.

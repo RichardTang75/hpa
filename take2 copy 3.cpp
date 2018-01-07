@@ -15,7 +15,7 @@
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
-#ifdef WIN32
+#ifdef _WIN32
 #include <SDL.h>
 #include <SDL_image.h>
 #else
@@ -373,10 +373,6 @@ int main(int argc, char* argv[])
     tuple_set created;
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
     draw_everything(all, primary, draw_maps_storage);
-//	back_text back(512, 512);
-//    tuple_int init=tuple_int(0,0);
-//	load_background(back, init, created, neighbors);
-//    draw_everything(back, all);
     SDL_RenderPresent(grenderer);
 	bool mousedown=false;
 	int mousestartx, mousestarty;

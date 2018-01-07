@@ -12,8 +12,11 @@
 #include <stdio.h>
 #include "typedef.hpp"
 #include "hierarchical_pathfind.hpp"
-//#include <SDL.h>
+#ifdef _WIN32
+#include <SDL.h>
+#else
 #include <SDL2/SDL.h>
+#endif
 class unit 
 {
 public:
