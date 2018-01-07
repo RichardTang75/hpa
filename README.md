@@ -8,5 +8,9 @@ Utilized multithreading for both the terrain generation and the preprocessing.
 
 Example picture of seamless generation. Four different maps are being displayed here, as evidenced by the slight discrepancies near the top left. There are still some problems to be worked out, but it shows the gist of the idea.
 ![Seamless attempt](seamless.png)
+As compared to the nonseamless map generation. ![](nonseamless.png)
+
+A picture of the generated nodes used in HPA. Black dots are entrances and exits, black line represents an example path going from 10,10 to 510, 510.
+![hierarchical path finding](hpa.PNG)
 
 In progress.
