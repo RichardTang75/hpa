@@ -371,8 +371,8 @@ int main(int argc, char* argv[])
     texture_storage draw_maps_storage;
     tuple_set processed;
     tuple_set created;
-    prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
-    draw_everything(all, primary, draw_maps_storage);
+	prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+	draw_everything(all, primary, draw_maps_storage);
 	SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
 	for (tuple_int coord : all_node_locs)
 	{
@@ -393,43 +393,58 @@ int main(int argc, char* argv[])
 				close();
 				break;
 			}
-			//switch (e.type)
-			//{
-//			case SDL_MOUSEBUTTONDOWN:
-//				    draw_everything(all, primary, draw_maps_storage);
-//				switch (e.button.button)
-//				{
-//				case SDL_BUTTON_LEFT:
-//					SDL_GetMouseState(&mousestartx, &mousestarty);
-//					std::cout << mousestartx << "," << mousestarty;
-//					mousedown = true;
-//					break;
-//				}
-//				break;
-//				SDL_RenderPresent(grenderer);
-//			case SDL_MOUSEBUTTONUP:
-//				mousedown = false;
-//				    draw_everything(all, primary, draw_maps_storage);
-//				if (mousemovedwhiledown == true)
-//				{
-//					//select units (
-//					mousemovedwhiledown = false;
-//				}
-//				SDL_RenderPresent(grenderer);
-//				break;
-//			case SDL_MOUSEMOTION:
-//				    draw_everything(all, primary, draw_maps_storage);
-//				if (mousedown == true)
-//				{
-//					int curx, cury;
-//					SDL_GetMouseState(&curx, &cury);
-//					SDL_Rect selectbox = { mousestartx ,mousestarty,
-//											curx - mousestartx,cury - mousestarty };
-//					SDL_RenderDrawRect(grenderer, &selectbox);
-//					mousemovedwhiledown = true;
-//				}
-//				SDL_RenderPresent(grenderer);
-//				break;
+			switch (e.type)
+			{
+			case SDL_MOUSEBUTTONDOWN:
+				SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
+				for (tuple_int coord : all_node_locs)
+				{
+					SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
+				}
+				draw_everything(all, primary, draw_maps_storage);
+				switch (e.button.button)
+				{
+				case SDL_BUTTON_LEFT:
+					SDL_GetMouseState(&mousestartx, &mousestarty);
+					std::cout << mousestartx << "," << mousestarty;
+					mousedown = true;
+					break;
+				}
+				break;
+				SDL_RenderPresent(grenderer);
+			case SDL_MOUSEBUTTONUP:
+				mousedown = false;
+				SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
+				for (tuple_int coord : all_node_locs)
+				{
+					SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
+				}
+				draw_everything(all, primary, draw_maps_storage);
+				if (mousemovedwhiledown == true)
+				{
+					//select units (
+					mousemovedwhiledown = false;
+				}
+				SDL_RenderPresent(grenderer);
+				break;
+			case SDL_MOUSEMOTION:
+				draw_everything(all, primary, draw_maps_storage);
+				SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
+				for (tuple_int coord : all_node_locs)
+				{
+					SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
+				}
+				if (mousedown == true)
+				{
+					int curx, cury;
+					SDL_GetMouseState(&curx, &cury);
+					SDL_Rect selectbox = { mousestartx ,mousestarty,
+											curx - mousestartx,cury - mousestarty };
+					SDL_RenderDrawRect(grenderer, &selectbox);
+					mousemovedwhiledown = true;
+				}
+				SDL_RenderPresent(grenderer);
+				break;
 			//case SDL_KEYDOWN:
 			//	switch (e.key.keysym.sym)
 			//	{
@@ -453,7 +468,7 @@ int main(int argc, char* argv[])
    //             draw_everything(all, primary, draw_maps_storage);
    //             SDL_RenderPresent(grenderer);
 			//	break;
-			//}
+			}
 		}
 		SDL_Delay(10);
 	}
