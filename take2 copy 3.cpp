@@ -15,10 +15,13 @@
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
+#ifdef _WIN32
 #include <SDL.h>
 #include <SDL_image.h>
-//#include <SDL2/SDL.h>
-//#include <SDL2_image/SDL_image.h>
+#else
+#include <SDL2/SDL.h>
+#include <SDL2_image/SDL_image.h>
+#endif
 #include "test_init.hpp"
 #include "country_controller.hpp"
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
@@ -34,6 +37,7 @@ std::vector<std::vector<int>> possible_move_costs=
     {1,2,2,4,2}, //water
     {1,2,2,4,0} //earth
 };
+tuple_set all_node_locs;
 SDL_Window* gwindow=NULL;
 SDL_Renderer* grenderer=NULL;
 class back_text
@@ -96,21 +100,25 @@ void back_text::simple_load(std::string path)
 }
 void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed)
 {
-     std::tuple<std::vector<tuple_set>, vectormap> sets_map;
+    std::tuple<std::vector<tuple_set>, vectormap> sets_map;
     sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, maps, created, processed);
-     std::vector<tuple_set> temp_map = std::get<0>(sets_map);
-     vectormap map = std::get<1>(sets_map);
-     tuple_set forest, mount, water, marsh;
-     forest = temp_map[0];
-     mount = temp_map[1];
-     water = temp_map[2];
-     marsh = temp_map[3];
-     simple_load("grass1t.png");
-     surface_processing("marsh1t.png", marsh);
-     surface_processing("forest1t.png", forest);
-     surface_processing("mount1t.png", mount);
-     surface_processing("water1t.png", water);
-     make_text();
+    std::vector<tuple_set> temp_map = std::get<0>(sets_map);
+    vectormap map = std::get<1>(sets_map);
+    if (retrieve==tuple_int(0,0))
+    {
+        map_stuff(map_width, map_height, map, all_node_locs);
+    }
+    tuple_set forest, mount, water, marsh;
+    forest = temp_map[0];
+    mount = temp_map[1];
+    water = temp_map[2];
+    marsh = temp_map[3];
+    simple_load("grass1t.png");
+    surface_processing("marsh1t.png", marsh);
+    surface_processing("forest1t.png", forest);
+    surface_processing("mount1t.png", mount);
+    surface_processing("water1t.png", water);
+    make_text();
 }
 void back_text::make_text()
 {
@@ -365,16 +373,11 @@ int main(int argc, char* argv[])
     tuple_set created;
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
     draw_everything(all, primary, draw_maps_storage);
-//	back_text back(512, 512);
-//    tuple_int init=tuple_int(0,0);
-//	load_background(back, init, created, neighbors);
-//    draw_everything(back, all);
     SDL_RenderPresent(grenderer);
 	bool mousedown=false;
 	int mousestartx, mousestarty;
 	bool mousemovedwhiledown=false;
 	SDL_Event e;
-    //map_stuff(<#int width#>, <#int height#>, <#vectormap &bigmap#>)
 	while (!quit) {
 		while (SDL_PollEvent(&e) != 0)
 		{
@@ -443,6 +446,11 @@ int main(int argc, char* argv[])
                                                   std::round(camera_y/512));
                 prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
                 draw_everything(all, primary, draw_maps_storage);
+                SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
+                for (tuple_int coord: all_node_locs)
+                {
+                    SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
+                }
                 SDL_RenderPresent(grenderer);
 				break;
 			}

@@ -412,7 +412,6 @@ void get_full_map(const int& map_x, const int& map_y,
 
             }
         }//thread here too
-        std::cout<<maps[std::make_tuple(map_x, map_y, Mtn)].size();
         std::thread finish_fst (step2, map_x, map_y, Fst, map_width, map_height, std::ref(maps));
         std::thread finish_mtn (step2, map_x, map_y, Mtn, map_width, map_height, std::ref(maps));
         std::thread finish_wtr (step2, map_x, map_y, Wtr, map_width, map_height, std::ref(maps));
@@ -421,7 +420,7 @@ void get_full_map(const int& map_x, const int& map_y,
         finish_mtn.join();
         finish_wtr.join();
         finish_msh.join();
-        std::cout<<maps[std::make_tuple(map_x, map_y, Mtn)].size();
+		//std::cout<<"Joined";
         processed.emplace(map_x, map_y);
     }
 }
@@ -449,7 +448,6 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 	tuple_set mountains = maps[std::make_tuple(map_x, map_y, Mtn)];
 	tuple_set water = maps[std::make_tuple(map_x, map_y, Wtr)];
 	tuple_set marsh = maps[std::make_tuple(map_x, map_y, Msh)];
-	std::cout << "JOINED";
 	//ALWAYS DELETE ONE ON TOP;
 	std::vector<tuple_set> terrain_overlap_decider = { marsh, forests, mountains, water };
 	for (int it = 0; it < terrain_overlap_decider.size();++it)

@@ -15,6 +15,7 @@ tuple_int which_map (tuple_int& location, int depth, int cut_size=8)
     int globalx=std::get<0>(location);
     int globaly=std::get<1>(location);
     //truncation towards zero. -10,0 should be in -1,0, -10,-10 should be in -1,-1 etc.
+	//i feel like I should just have std::trunc'd this
     if (globalx<0){globalx-=map_size;}
     if (globaly<0){globaly-=map_size;}
     int which_x=globalx/(pow(cut_size,depth));

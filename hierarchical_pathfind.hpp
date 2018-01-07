@@ -10,8 +10,8 @@
 #define hierarchical_pathfind_hpp
 
 #include "pathfinding.hpp"
-std::unordered_map<tuple_int,vectormap,boost::hash<tuple_int>> cut(vectormap& to_cut, int x_begin,
-                                                                   int y_begin, int cut_size);
+std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> cut(vectormap& to_cut, int map_width,
+	int map_height, int cut_size);
 path_with_cost hierarchical_pathfind(tuple_int& to, tuple_int& from, std::vector<int>& movecosts,
 									std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset,
 									int max_depth, int cut_size, node_retrieval& every_node_map);
