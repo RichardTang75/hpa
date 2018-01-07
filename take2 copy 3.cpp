@@ -164,26 +164,32 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
         SDL_UnlockSurface(temp);
     }
     SDL_BlitSurface(temp, NULL, t_surf, NULL);
-    if (!(features.empty()))
-    {
-        SDL_FreeSurface(temp);
-        temp=NULL;
-        temp=IMG_Load(features.c_str());
-        int temp_width=temp->w;
-        int temp_height=temp->h;
-        std::mt19937 eng(seed);
-        std::uniform_real_distribution<float> thresh(0,1);
-        for (tuple_int coord:to_add)
-        {
-            float temp_thresh=thresh(eng);
-            if (temp_thresh<hurdle)
-            {
-                SDL_Rect dstrect{(std::get<0>(coord)-temp_width/2),(std::get<1>(coord)-temp_height/2),
-                                    temp_width,temp_height};
-                SDL_BlitSurface(temp,NULL,t_surf,&dstrect);
-            }
-        }
-    }
+    SDL_FreeSurface(initial);
+    SDL_FreeSurface(temp);
+    initial=NULL;
+    temp=NULL;
+    dstpixels=NULL;
+    srcpixels=NULL;
+//    if (!(features.empty()))
+//    {
+//        SDL_FreeSurface(temp);
+//        temp=NULL;
+//        temp=IMG_Load(features.c_str());
+//        int temp_width=temp->w;
+//        int temp_height=temp->h;
+//        std::mt19937 eng(seed);
+//        std::uniform_real_distribution<float> thresh(0,1);
+//        for (tuple_int coord:to_add)
+//        {
+//            float temp_thresh=thresh(eng);
+//            if (temp_thresh<hurdle)
+//            {
+//                SDL_Rect dstrect{(std::get<0>(coord)-temp_width/2),(std::get<1>(coord)-temp_height/2),
+//                                    temp_width,temp_height};
+//                SDL_BlitSurface(temp,NULL,t_surf,&dstrect);
+//            }
+//        }
+//    }
 }
 
 //terrain type should be 0 for grass and I'll later expand this with either choice or if statements
