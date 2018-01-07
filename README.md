@@ -10,6 +10,8 @@ Example picture of seamless generation. Four different maps are being displayed 
 
 
 ![Seamless attempt](seamless.png)
+
+
 A picture of the nonseamless map generation for purposes of comparison. 
 
 
