@@ -373,6 +373,11 @@ int main(int argc, char* argv[])
     tuple_set created;
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
     draw_everything(all, primary, draw_maps_storage);
+	SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
+	for (tuple_int coord : all_node_locs)
+	{
+		SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
+	}
     SDL_RenderPresent(grenderer);
 	bool mousedown=false;
 	int mousestartx, mousestarty;
@@ -388,8 +393,8 @@ int main(int argc, char* argv[])
 				close();
 				break;
 			}
-			switch (e.type)
-			{
+			//switch (e.type)
+			//{
 //			case SDL_MOUSEBUTTONDOWN:
 //				    draw_everything(all, primary, draw_maps_storage);
 //				switch (e.button.button)
@@ -425,35 +430,30 @@ int main(int argc, char* argv[])
 //				}
 //				SDL_RenderPresent(grenderer);
 //				break;
-			case SDL_KEYDOWN:
-				switch (e.key.keysym.sym)
-				{
-				case SDLK_UP:
-					std::cout << "UP";
-                    camera_y=camera_y-8;
-					break;
-                case SDLK_DOWN:
-                    camera_y=camera_y+8;
-                    break;
-                case SDLK_LEFT:
-                    camera_x=camera_x-8;
-                    break;
-                case SDLK_RIGHT:
-                    camera_x=camera_x+8;
-                    break;
-                }
-                tuple_int primary=std::make_tuple(std::round(camera_x/512),
-                                                  std::round(camera_y/512));
-                prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
-                draw_everything(all, primary, draw_maps_storage);
-                SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                for (tuple_int coord: all_node_locs)
-                {
-                    SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                }
-                SDL_RenderPresent(grenderer);
-				break;
-			}
+			//case SDL_KEYDOWN:
+			//	switch (e.key.keysym.sym)
+			//	{
+			//	case SDLK_UP:
+			//		std::cout << "UP";
+   //                 camera_y=camera_y-8;
+			//		break;
+   //             case SDLK_DOWN:
+   //                 camera_y=camera_y+8;
+   //                 break;
+   //             case SDLK_LEFT:
+   //                 camera_x=camera_x-8;
+   //                 break;
+   //             case SDLK_RIGHT:
+   //                 camera_x=camera_x+8;
+   //                 break;
+   //             }
+   //             tuple_int primary=std::make_tuple(std::round(camera_x/512),
+   //                                               std::round(camera_y/512));
+   //             prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+   //             draw_everything(all, primary, draw_maps_storage);
+   //             SDL_RenderPresent(grenderer);
+			//	break;
+			//}
 		}
 		SDL_Delay(10);
 	}
