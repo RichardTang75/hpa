@@ -1,4 +1,6 @@
 # hpa
+Please refer to https://github.com/RichardTang75/hpa/wiki for the design writeup.
+
 Learned and used C++ to build upon Barbaros, speeding up map generation and adding better graphics. 
 Refactored the algorithm behind the procedural terrain generation. 
 Refactored the algorithm behind updating maps based on neighboring maps for seamlessness for greater accuracy.
