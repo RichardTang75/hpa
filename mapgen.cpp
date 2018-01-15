@@ -29,9 +29,10 @@ enum Terrain {Grs, Fst, Msh, Mtn, Wtr};
 void terrain_overlap(tuple_set& bottom, tuple_set& top, float threshold=.05 ,int seed = 0)
 {
 	std::mt19937 eng;
+    std::random_device rd;
 	if (seed == 0)
 	{
-		std::mt19937 eng(std::random_device());
+		std::mt19937 eng(rd());
 	}
 	else
 	{

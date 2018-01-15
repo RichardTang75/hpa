@@ -59,6 +59,7 @@ void snake_expand(tuple_set& in, tuple_int& coord, tuple_int& dir)
         tuple_set_expand(in, to_add);
     }
 }
+//code heavily influenced by wikipedia article.
 void bresenham(tuple_set& in, int startx, int endx, int starty, int endy)
 {
 	int dx = endx - startx;

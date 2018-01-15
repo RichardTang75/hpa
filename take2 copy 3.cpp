@@ -6,8 +6,6 @@
 //  Created by asdfuiop on 6/10/17.
 //  Copyright © 2017 asdfuiop
 
-// code for the pixel came from http://sol.gfxile.net/gp/ch02.html and 
-// https://www.gamedev.net/forums/topic/358269-copying-pixels-to-an-sdl-surface/.
 #include <iostream>
 #include <string>
 #include <random>
@@ -95,7 +93,6 @@ void back_text::free()
 void back_text::simple_load(std::string path)
 {
     SDL_FreeSurface(t_surf);
-    t_surf=NULL;
     t_surf=IMG_Load(path.c_str());
 }
 void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed)
@@ -104,10 +101,10 @@ void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tup
     sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, maps, created, processed);
     std::vector<tuple_set> temp_map = std::get<0>(sets_map);
     vectormap map = std::get<1>(sets_map);
-    if (retrieve==tuple_int(0,0))
-    {
-        map_stuff(map_width, map_height, map, all_node_locs);
-    }
+//    if (retrieve==tuple_int(0,0))
+//    {
+//        map_stuff(map_width, map_height, map, all_node_locs);
+//    }
     tuple_set forest, mount, water, marsh;
     forest = temp_map[0];
     mount = temp_map[1];
@@ -134,6 +131,8 @@ int back_text::get_width()
     return width;
 }
 
+// code for the SDL per-pixel stuff came from http://sol.gfxile.net/gp/ch02.html and
+// https://www.gamedev.net/forums/topic/358269-copying-pixels-to-an-sdl-surface/.
 void back_text::surface_processing(std::string path, tuple_set& to_add, std::string features,int seed,float hurdle)
 {
     SDL_Surface* initial=IMG_Load(path.c_str());
@@ -143,25 +142,30 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
     {
         SDL_LockSurface(temp);
     }
+    if(SDL_MUSTLOCK(initial))
+    {
+        SDL_LockSurface(initial);
+    }
     int scanline=(temp->pitch)/4;
     Uint8 red,green,blue;
-    int width=temp->w;
-    int height=temp->h;
     Uint32* dstpixels=(Uint32*)temp->pixels;
-    for (int y=0; y<(height);++y)
+    for (tuple_int coord: to_add)
     {
-        for (int x=0; x<(width);++x)
+        if (in_bounds(0, map_width,0 , map_height, coord))
         {
-            if (to_add.count(std::make_tuple(x,y))>0)
-            {
-                SDL_GetRGB(srcpixels[(scanline*y)+x],initial->format,&red,&green,&blue);
-                dstpixels[(scanline*y)+x]=SDL_MapRGBA(temp->format,red,green,blue,0xFF);
-            }
+            int x=std::get<0>(coord);
+            int y=std::get<1>(coord);
+            SDL_GetRGB(srcpixels[(scanline*y)+x],initial->format,&red,&green,&blue);
+            dstpixels[(scanline*y)+x]=SDL_MapRGBA(temp->format,red,green,blue,0xFF);
         }
     }
     if (SDL_MUSTLOCK(temp))
     {
         SDL_UnlockSurface(temp);
+    }
+    if(SDL_MUSTLOCK(initial))
+    {
+        SDL_LockSurface(initial);
     }
     SDL_BlitSurface(temp, NULL, t_surf, NULL);
     SDL_FreeSurface(initial);
@@ -170,26 +174,6 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
     temp=NULL;
     dstpixels=NULL;
     srcpixels=NULL;
-//    if (!(features.empty()))
-//    {
-//        SDL_FreeSurface(temp);
-//        temp=NULL;
-//        temp=IMG_Load(features.c_str());
-//        int temp_width=temp->w;
-//        int temp_height=temp->h;
-//        std::mt19937 eng(seed);
-//        std::uniform_real_distribution<float> thresh(0,1);
-//        for (tuple_int coord:to_add)
-//        {
-//            float temp_thresh=thresh(eng);
-//            if (temp_thresh<hurdle)
-//            {
-//                SDL_Rect dstrect{(std::get<0>(coord)-temp_width/2),(std::get<1>(coord)-temp_height/2),
-//                                    temp_width,temp_height};
-//                SDL_BlitSurface(temp,NULL,t_surf,&dstrect);
-//            }
-//        }
-//    }
 }
 
 //terrain type should be 0 for grass and I'll later expand this with either choice or if statements
@@ -416,8 +400,8 @@ int main(int argc, char* argv[])
 					mousedown = true;
 					break;
 				}
+                SDL_RenderPresent(grenderer);
 				break;
-				SDL_RenderPresent(grenderer);
 			case SDL_MOUSEBUTTONUP:
 				mousedown = false;
 				SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
@@ -451,29 +435,29 @@ int main(int argc, char* argv[])
 				}
 				SDL_RenderPresent(grenderer);
 				break;
-			//case SDL_KEYDOWN:
-			//	switch (e.key.keysym.sym)
-			//	{
-			//	case SDLK_UP:
-			//		std::cout << "UP";
-   //                 camera_y=camera_y-8;
-			//		break;
-   //             case SDLK_DOWN:
-   //                 camera_y=camera_y+8;
-   //                 break;
-   //             case SDLK_LEFT:
-   //                 camera_x=camera_x-8;
-   //                 break;
-   //             case SDLK_RIGHT:
-   //                 camera_x=camera_x+8;
-   //                 break;
-   //             }
-   //             tuple_int primary=std::make_tuple(std::round(camera_x/512),
-   //                                               std::round(camera_y/512));
-   //             prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
-   //             draw_everything(all, primary, draw_maps_storage);
-   //             SDL_RenderPresent(grenderer);
-			//	break;
+			case SDL_KEYDOWN:
+				switch (e.key.keysym.sym)
+				{
+				case SDLK_UP:
+					std::cout << "UP";
+                    camera_y=camera_y-8;
+					break;
+                case SDLK_DOWN:
+                    camera_y=camera_y+8;
+                    break;
+                case SDLK_LEFT:
+                    camera_x=camera_x-8;
+                    break;
+                case SDLK_RIGHT:
+                    camera_x=camera_x+8;
+                    break;
+                }
+                tuple_int primary=std::make_tuple(std::round(camera_x/512),
+                                                  std::round(camera_y/512));
+                prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+                draw_everything(all, primary, draw_maps_storage);
+                SDL_RenderPresent(grenderer);
+				break;
 			}
 		}
 		SDL_Delay(10);
