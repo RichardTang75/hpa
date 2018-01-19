@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include "typedef.hpp"
-#include "lodepng.h"
 
 void tuple_set_expand(tuple_set& in, tuple_int& coord)
 {

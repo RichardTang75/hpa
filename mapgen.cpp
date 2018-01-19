@@ -12,7 +12,6 @@
 #include "typedef.hpp"
 #include "goodfunctions.hpp"
 #include "terrain.hpp"
-#include "lodepng.h"
 
 std::vector<tuple_int> directions=
 {
