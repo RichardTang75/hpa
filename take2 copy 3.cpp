@@ -28,34 +28,34 @@
 #endif
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
 //globals can go back into main if I really need it
-int map_width=512;
-int map_height=512;
-float camera_x=0;
-float camera_y=0;
-std::vector<std::vector<int>> possible_move_costs=
+int map_width = 512;
+int map_height = 512;
+float camera_x = 0;
+float camera_y = 0;
+std::vector<std::vector<int>> possible_move_costs =
 {
-    {1,2,3,4,0}, //basic move cost-used by fire and metal
-    {1,1,2,4,0}, //wood
-    {1,2,2,4,2}, //water
-    {1,2,2,4,0} //earth
+	{ 1,2,3,4,0 }, //basic move cost-used by fire and metal
+	{ 1,1,2,4,0 }, //wood
+	{ 1,2,2,4,2 }, //water
+	{ 1,2,2,4,0 } //earth
 };
 tuple_set all_node_locs;
-SDL_Window* gwindow=NULL;
-SDL_Renderer* grenderer=NULL;
+SDL_Window* gwindow = NULL;
+SDL_Renderer* grenderer = NULL;
 class back_text
 {
 public:
-    back_text(int width, int height);
-    back_text(void);
-    ~back_text();
-    void free();
-    void surface_processing(std::string path, tuple_set& to_add, std::string features="",int seed=0, float hurdle=.001);
-    void simple_load(std::string path);
-    void load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed);
-    void make_text(void);
-    void render(int x,int y);
-    int get_width();
-    int get_height();
+	back_text(int width, int height);
+	back_text(void);
+	~back_text();
+	void free();
+	void surface_processing(std::string path, tuple_set& to_add, std::string features = "", int seed = 0, float hurdle = .001);
+	void simple_load(std::string path);
+	void load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed);
+	void make_text(void);
+	void render(int x, int y);
+	int get_width();
+	int get_height();
 private:
     int width;
     int height;
@@ -75,34 +75,34 @@ bool mousemovedwhiledown=false;
 #endif
 back_text::back_text()
 {
-    f_texture=NULL;
-    width=map_width;
-    height=map_height;
+	f_texture = NULL;
+	width = map_width;
+	height = map_height;
 }
 back_text::back_text(int set_width, int set_height)
 {
-    f_texture=NULL;
-    width=set_width;
-    height=set_height;
+	f_texture = NULL;
+	width = set_width;
+	height = set_height;
 }
 back_text::~back_text()
 {
-    back_text::free();
+	back_text::free();
 }
 void back_text::render(int x, int y)
 {
-    SDL_Rect render_rect={x,y,width,height};
-    SDL_RenderCopy(grenderer,f_texture,NULL, &render_rect);
+	SDL_Rect render_rect = { x,y,width,height };
+	SDL_RenderCopy(grenderer, f_texture, NULL, &render_rect);
 }
 void back_text::free()
 {
-    if (f_texture!=NULL)
-    {
-        SDL_DestroyTexture(f_texture);
-        f_texture=NULL;
-        width=0;
-        height=0;
-    }
+	if (f_texture != NULL)
+	{
+		SDL_DestroyTexture(f_texture);
+		f_texture = NULL;
+		width = 0;
+		height = 0;
+	}
 }
 void back_text::simple_load(std::string path)
 {
@@ -134,16 +134,16 @@ void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tup
 }
 void back_text::make_text()
 {
-    if (f_texture==NULL)
-    {
-        f_texture=SDL_CreateTextureFromSurface(grenderer, t_surf);
-        SDL_FreeSurface(t_surf);
-        t_surf=NULL;
-    }
+	if (f_texture == NULL)
+	{
+		f_texture = SDL_CreateTextureFromSurface(grenderer, t_surf);
+		SDL_FreeSurface(t_surf);
+		t_surf = NULL;
+	}
 }
 int back_text::get_width()
 {
-    return width;
+	return width;
 }
 
 // code for the SDL per-pixel stuff came from http://sol.gfxile.net/gp/ch02.html and
@@ -195,49 +195,49 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
 
 bool init(int& width, int& height)
 {
-    bool success=true;
-    if (SDL_Init(SDL_INIT_VIDEO)<0)
-    {
-        success=false;
-        std::cout<<"Error Code:"<<SDL_GetError()<<"\n";
-    }
-    else{
-        gwindow=SDL_CreateWindow("Temp", SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
-        if (gwindow==NULL)
-        {
-            success=false;
-            std::cout<<"Error Code:"<<SDL_GetError()<<"\n";
-        }
-        else
-        {
-            grenderer=SDL_CreateRenderer(gwindow, -1, SDL_RENDERER_ACCELERATED);
-            if (grenderer==NULL)
-            {
-                success=false;
-                std::cout<<"Error Code:"<<SDL_GetError()<<"\n";
-            }
-            else
-            {
-                SDL_SetRenderDrawColor(grenderer,0xFF,0xFF,0xFF,0xFF);
-                int img_flags=IMG_INIT_PNG;
-                if (!(IMG_Init(img_flags) & img_flags))
-                {
-                    success=false;
-                    std::cout<<"Error Code(sdl_image):"<<IMG_GetError()<<"\n";
-                }
-            }
-        }
-    }
-    return success;
+	bool success = true;
+	if (SDL_Init(SDL_INIT_VIDEO)<0)
+	{
+		success = false;
+		std::cout << "Error Code:" << SDL_GetError() << "\n";
+	}
+	else {
+		gwindow = SDL_CreateWindow("Temp", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
+		if (gwindow == NULL)
+		{
+			success = false;
+			std::cout << "Error Code:" << SDL_GetError() << "\n";
+		}
+		else
+		{
+			grenderer = SDL_CreateRenderer(gwindow, -1, SDL_RENDERER_ACCELERATED);
+			if (grenderer == NULL)
+			{
+				success = false;
+				std::cout << "Error Code:" << SDL_GetError() << "\n";
+			}
+			else
+			{
+				SDL_SetRenderDrawColor(grenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+				int img_flags = IMG_INIT_PNG;
+				if (!(IMG_Init(img_flags) & img_flags))
+				{
+					success = false;
+					std::cout << "Error Code(sdl_image):" << IMG_GetError() << "\n";
+				}
+			}
+		}
+	}
+	return success;
 }
 void close()
 {
-    SDL_DestroyRenderer(grenderer);
-    grenderer=NULL;
-    SDL_DestroyWindow(gwindow);
-    gwindow=NULL;
-    IMG_Quit();
-    SDL_Quit();
+	SDL_DestroyRenderer(grenderer);
+	grenderer = NULL;
+	SDL_DestroyWindow(gwindow);
+	gwindow = NULL;
+	IMG_Quit();
+	SDL_Quit();
 }
 std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector<unit>& all_units)
 {
@@ -255,8 +255,8 @@ std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector
 }
 //max of 4 at once
 void draw_everything(std::vector<unit>& all,
-                     tuple_int& primary,
-                     texture_storage& draw_maps_storage)
+	tuple_int& primary,
+	texture_storage& draw_maps_storage)
 {
     int draw_x=std::get<0>(primary)*map_width-camera_x;
     int draw_y=std::get<1>(primary)*map_height-camera_y;
@@ -316,46 +316,46 @@ void draw_everything(std::vector<unit>& all,
 //too far, free, reset? write to disk the vectormap? why didn't i just allow direct creation of texture from vectormaps.
 //threadpools?
 void prepare_the_maps(tuple_int& primary,
-                      tuple_set& processed,
-                      tuple_set& created,
-                      tuple_triple_map& maps,
-                      texture_storage& draw_maps_storage)
+	tuple_set& processed,
+	tuple_set& created,
+	tuple_triple_map& maps,
+	texture_storage& draw_maps_storage)
 {
-    std::vector<tuple_int> first_dirs={
-        tuple_int(-1,0), tuple_int(1,0),
-        tuple_int(0,-1), tuple_int(0,1)};
-    std::vector<tuple_int> second_dirs={
-        tuple_int(-1,-1),tuple_int(-1,1),
-        tuple_int(1,-1), tuple_int(1,1)
-    };
-    if (processed.count(primary)==0)
-    {
-        back_text temp(512,512);
-        draw_maps_storage.insert(std::make_pair(primary, temp));
-        draw_maps_storage[primary].load_background(primary, maps, created, processed);
-    }
-    for (tuple_int dir: first_dirs)
-    {
-        tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
-                                        std::get<1>(primary)+std::get<1>(dir));
-        if (processed.count(retrievin)==0)
-        {
-            back_text temp(512, 512);
-            draw_maps_storage.insert(std::make_pair(retrievin, temp));
-            draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
-        }
-    }
-    for (tuple_int dir: second_dirs)
-    {
-        tuple_int retrievin = tuple_int(std::get<0>(primary)+std::get<0>(dir),
-                                        std::get<1>(primary)+std::get<1>(dir));
-        if (processed.count(retrievin)==0)
-        {
-            back_text temp(512, 512);
-            draw_maps_storage.insert(std::make_pair(retrievin, temp));
-            draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
-        }
-    }
+	std::vector<tuple_int> first_dirs = {
+		tuple_int(-1,0), tuple_int(1,0),
+		tuple_int(0,-1), tuple_int(0,1) };
+	std::vector<tuple_int> second_dirs = {
+		tuple_int(-1,-1),tuple_int(-1,1),
+		tuple_int(1,-1), tuple_int(1,1)
+	};
+	if (processed.count(primary) == 0)
+	{
+		back_text temp(512, 512);
+		draw_maps_storage.insert(std::make_pair(primary, temp));
+		draw_maps_storage[primary].load_background(primary, maps, created, processed);
+	}
+	for (tuple_int dir : first_dirs)
+	{
+		tuple_int retrievin = tuple_int(std::get<0>(primary) + std::get<0>(dir),
+			std::get<1>(primary) + std::get<1>(dir));
+		if (processed.count(retrievin) == 0)
+		{
+			back_text temp(512, 512);
+			draw_maps_storage.insert(std::make_pair(retrievin, temp));
+			draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
+		}
+	}
+	for (tuple_int dir : second_dirs)
+	{
+		tuple_int retrievin = tuple_int(std::get<0>(primary) + std::get<0>(dir),
+			std::get<1>(primary) + std::get<1>(dir));
+		if (processed.count(retrievin) == 0)
+		{
+			back_text temp(512, 512);
+			draw_maps_storage.insert(std::make_pair(retrievin, temp));
+			draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
+		}
+	}
 }
 #ifdef EMSCRIPTEN
 void draw(void)
