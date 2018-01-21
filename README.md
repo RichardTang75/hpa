@@ -2,12 +2,14 @@
 
 Please refer to https://github.com/RichardTang75/hpa/wiki for the design writeup.
 
-Learned and used C++ to build upon Barbaros, speeding up map generation and adding better graphics. 
-Refactored the algorithm behind the procedural terrain generation. 
-Refactored the algorithm behind updating maps based on neighboring maps for seamlessness for greater accuracy.
-Used SDL to modify and draw pictures. Involved SDL pixel access to create a kind of clipping mask to form the image displayed. 
-Implemented hierarchical pathfinding (map preprocessing) from a paper [https://webdocs.cs.ualberta.ca/~mmueller/ps/hpastar.pdf]. 
-Utilized multithreading for both the terrain generation and the preprocessing. 
+This my second attempt at a game, the first being https://github.com/RichardTang75/seamless-generation. I decided to learn and use C++ to get better portability and speed. I've since then redone the algorithm behind the procedural terrain generation and how I tie together the maps. I've been using SDL for the graphics. 
+
+What I have so far are some of the basic building blocks of the game that I'm still working on. These include:
+
+* Using SDL pixel access to create a sort of clipping mask using the pngs in the asset folder as the source images
+* Implementing a version of hierarchical pathfinding (map preprocessing) from a paper [https://webdocs.cs.ualberta.ca/~mmueller/ps/hpastar.pdf]. 
+* Utilized multithreading for both the terrain generation and the preprocessing. 
+* A browser port
 
 Example picture of seamless generation. Four different maps are being displayed here, as evidenced by the slight discrepancies near the top left. There are still some problems to be worked out, but it shows the gist of the idea.
 
