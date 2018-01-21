@@ -169,6 +169,7 @@ std::vector<std::tuple<tuple_int, float>> a_pathfind_controller(vectormap& map, 
 	int mod_path_y = std::get<1>(path) + offsetY;
 	tuple_int mod_path = tuple_int(mod_path_x, mod_path_y);
     to_return.push_back(std::make_tuple(mod_path,std::get<1>(coord_came_and_cost)));
+    //have to use path because no way to search up queue_items by location.
     while (path != mod_start)
     {
         coord_came_and_cost=visits[path];
