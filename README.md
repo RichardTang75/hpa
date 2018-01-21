@@ -8,7 +8,7 @@ What I have so far are some of the basic building blocks of the game that I'm st
 
 * Using SDL pixel access to create a sort of clipping mask using the pngs in the asset folder as the source images
 * Implementing a version of hierarchical pathfinding (map preprocessing) from a paper [https://webdocs.cs.ualberta.ca/~mmueller/ps/hpastar.pdf]. 
-* Utilized multithreading for both the terrain generation and the preprocessing. 
+* Utilized multithreading for both the terrain generation and the preprocessing. For reference, the python version of map generation took about 45 seconds on average, whereas on -O3 this takes about 8.7 seconds.
 * A browser port
 
 Example picture of seamless generation. Four different maps are being displayed here, as evidenced by the slight discrepancies near the top left. There are still some problems to be worked out, but it shows the gist of the idea.
