@@ -371,6 +371,45 @@ void get_full_map(const int& map_x, const int& map_y,
     int seed_start=0;
     if (processed.count(tuple_int(map_x, map_y))==0)
     {
+#ifdef EMSCRIPTEN
+        if (created.count(tuple_int(map_x, map_y))==0)
+        {
+            
+            step1 (map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
+                   std::ref(maps[std::make_tuple(map_x, map_y, Fst)]), seeds[seed_start+0]);
+            step1 (map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+                   std::ref(maps[std::make_tuple(map_x, map_y, Mtn)]), seeds[seed_start+1]);
+            step1 (map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
+                   std::ref(maps[std::make_tuple(map_x, map_y, Wtr)]), seeds[seed_start+2]);
+            step1 (map_width, map_height, 3, 5, 2, 4, 5, 10, 15, 18,
+                   std::ref(maps[std::make_tuple(map_x, map_y, Msh)]), seeds[seed_start+3]);
+            created.emplace(tuple_int(map_x, map_y));
+            seed_start=seed_start+4;
+        }
+        for (tuple_int dir: directions)
+        {
+            int desired_x=std::get<0>(dir)+map_x;
+            int desired_y=std::get<1>(dir)+map_y;
+            if (created.count(tuple_int(desired_x, desired_y))==0)
+            {
+                step1 (map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
+                       std::ref(maps[std::make_tuple(desired_x, desired_y, Fst)]), seeds[seed_start+0]);
+                step1 (map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+                       std::ref(maps[std::make_tuple(desired_x, desired_y, Mtn)]), seeds[seed_start+1]);
+                step1 (map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
+                       std::ref(maps[std::make_tuple(desired_x, desired_y, Wtr)]), seeds[seed_start+2]);
+                step1 (map_width, map_height, 3, 5, 2, 4, 5, 10, 15, 18,
+                       std::ref(maps[std::make_tuple(desired_x, desired_y, Msh)]), seeds[seed_start+3]);
+                created.emplace(tuple_int (desired_x, desired_y));
+                seed_start=seed_start+4;
+                
+            }
+        }//thread here too
+        step2( map_x, map_y, Fst, map_width, map_height, std::ref(maps));
+        step2( map_x, map_y, Mtn, map_width, map_height, std::ref(maps));
+        step2( map_x, map_y, Wtr, map_width, map_height, std::ref(maps));
+        step2( map_x, map_y, Msh, map_width, map_height, std::ref(maps));
+#else
         if (created.count(tuple_int(map_x, map_y))==0)
         {
 
@@ -420,6 +459,7 @@ void get_full_map(const int& map_x, const int& map_y,
         finish_mtn.join();
         finish_wtr.join();
         finish_msh.join();
+#endif
 		//std::cout<<"Joined";
         processed.emplace(map_x, map_y);
     }

@@ -5,11 +5,13 @@
 //
 //  Created by asdfuiop on 6/10/17.
 //  Copyright © 2017 asdfuiop
-
+//makefile tutorial that helped me immensely with emscripten:
+//http://blog.scottlogic.com/2014/03/12/native-code-emscripten-webgl-simmer-gently.html
 #include <iostream>
 #include <string>
 #include <random>
 #include <chrono>
+#include <assert.h>
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
@@ -21,7 +23,7 @@
 #include <SDL_image.h>
 #include "test_init.hpp"
 #include "country_controller.hpp"
-#ifdef __EMSCRIPTEN__
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
 #endif
 //0=grass, 1=forest, 2=marsh, 3=mountain, 4=water,
@@ -58,9 +60,19 @@ private:
     int width;
     int height;
     SDL_Texture* f_texture=NULL;
-    SDL_Surface* t_surf=IMG_Load("empty.png");
+    SDL_Surface* t_surf=IMG_Load("assets/empty.png");
 };
 typedef std::unordered_map<tuple_int, back_text, boost::hash<tuple_int>> texture_storage;
+#ifdef EMSCRIPTEN
+tuple_triple_map maps;
+texture_storage draw_maps_storage;
+tuple_set processed;
+tuple_set created;
+bool mousedown=false;
+int curx, cury;
+int mousestartx, mousestarty;
+bool mousemovedwhiledown=false;
+#endif
 back_text::back_text()
 {
     f_texture=NULL;
@@ -103,21 +115,21 @@ void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tup
     sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, maps, created, processed);
     std::vector<tuple_set> temp_map = std::get<0>(sets_map);
     vectormap map = std::get<1>(sets_map);
-//    if (retrieve==tuple_int(0,0))
-//    {
-//        map_stuff(map_width, map_height, map, all_node_locs);
-//    }
+    //    if (retrieve==tuple_int(0,0))
+    //    {
+    //        map_stuff(map_width, map_height, map, all_node_locs);
+    //    }
     tuple_set forest, mount, water, marsh;
     forest = temp_map[0];
     mount = temp_map[1];
     water = temp_map[2];
     marsh = temp_map[3];
-    simple_load("grass1t.png");
+    simple_load("assets/grass1t.png");
     //maybe surface_procesing should return the surface so I can then thread this, then sequentially blit
-    surface_processing("marsh1t.png", marsh);
-    surface_processing("forest1t.png", forest);
-    surface_processing("mount1t.png", mount);
-    surface_processing("water1t.png", water);
+    surface_processing("assets/marsh1t.png", marsh);
+    surface_processing("assets/forest1t.png", forest);
+    surface_processing("assets/mount1t.png", mount);
+    surface_processing("assets/water1t.png", water);
     make_text();
 }
 void back_text::make_text()
@@ -139,7 +151,7 @@ int back_text::get_width()
 void back_text::surface_processing(std::string path, tuple_set& to_add, std::string features,int seed,float hurdle)
 {
     SDL_Surface* initial=IMG_Load(path.c_str());
-    SDL_Surface* temp=IMG_Load("empty.png");
+    SDL_Surface* temp=IMG_Load("assets/empty.png");
     Uint32* srcpixels=(Uint32*)initial->pixels;
     if(SDL_MUSTLOCK(temp))
     {
@@ -229,17 +241,17 @@ void close()
 }
 std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector<unit>& all_units)
 {
-	std::vector<unit> selected;
-	for (unit possible : all_units)
-	{
-		int unit_x, unit_y;
-		std::tie(unit_x, unit_y) = possible.get_pos();
-		if (unit_x > startx && unit_x<endx && unit_y>starty && unit_x < endy)
-		{
-			selected.push_back(possible);
-		}
-	}
-	return selected;
+    std::vector<unit> selected;
+    for (unit possible : all_units)
+    {
+        int unit_x, unit_y;
+        std::tie(unit_x, unit_y) = possible.get_pos();
+        if (unit_x > startx && unit_x<endx && unit_y>starty && unit_x < endy)
+        {
+            selected.push_back(possible);
+        }
+    }
+    return selected;
 }
 //max of 4 at once
 void draw_everything(std::vector<unit>& all,
@@ -249,11 +261,11 @@ void draw_everything(std::vector<unit>& all,
     int draw_x=std::get<0>(primary)*map_width-camera_x;
     int draw_y=std::get<1>(primary)*map_height-camera_y;
     draw_maps_storage[primary].render(draw_x, draw_y);
-	SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
-	for (unit i : all)
-	{
-		i.render(grenderer);
-	}
+    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
+    for (unit i : all)
+    {
+        i.render(grenderer);
+    }
     std::vector<tuple_int> to_draw;
     if (camera_x-std::get<0>(primary)*map_width>0)
     {
@@ -345,49 +357,27 @@ void prepare_the_maps(tuple_int& primary,
         }
     }
 }
-void loop_events()
+#ifdef EMSCRIPTEN
+void draw(void)
 {
-    bool quit=false;
     std::vector<int> common = { 1,2,3,4,0 };
     unit temp(tuple_int(256, 256), 10, 10, 10, 10, 10, 10, 0, 0, 100, 100, 100, tuple_int(-1, -1), common);
     std::vector<unit> selected;
     std::vector<unit> all{ temp };
     tuple_int primary=std::make_tuple(std::round(camera_x/512),
                                       std::round(camera_y/512));
-    tuple_triple_map maps;
-    texture_storage draw_maps_storage;
-    tuple_set processed;
-    tuple_set created;
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
-    draw_everything(all, primary, draw_maps_storage);
-    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-    for (tuple_int coord : all_node_locs)
-    {
-        SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-    }
-    SDL_RenderPresent(grenderer);
     SDL_Event e;
-    bool mousedown=false;
-    int mousestartx, mousestarty;
-    bool mousemovedwhiledown=false;
     while (SDL_PollEvent(&e) != 0)
     {
-        SDL_RenderClear(grenderer);
         if (e.type == SDL_QUIT)
         {
-            quit = true;
             close();
             break;
         }
         switch (e.type)
         {
             case SDL_MOUSEBUTTONDOWN:
-                SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                for (tuple_int coord : all_node_locs)
-                {
-                    SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                }
-                draw_everything(all, primary, draw_maps_storage);
                 switch (e.button.button)
             {
                 case SDL_BUTTON_LEFT:
@@ -396,40 +386,20 @@ void loop_events()
                     mousedown = true;
                     break;
             }
-                SDL_RenderPresent(grenderer);
                 break;
             case SDL_MOUSEBUTTONUP:
-                mousedown = false;
-                SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                for (tuple_int coord : all_node_locs)
-                {
-                    SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                }
-                draw_everything(all, primary, draw_maps_storage);
                 if (mousemovedwhiledown == true)
                 {
                     //select units (
                     mousemovedwhiledown = false;
                 }
-                SDL_RenderPresent(grenderer);
+                mousedown=false;
                 break;
             case SDL_MOUSEMOTION:
-                draw_everything(all, primary, draw_maps_storage);
-                SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                for (tuple_int coord : all_node_locs)
-                {
-                    SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                }
                 if (mousedown == true)
                 {
-                    int curx, cury;
                     SDL_GetMouseState(&curx, &cury);
-                    SDL_Rect selectbox = { mousestartx , mousestarty,
-                        curx - mousestartx,cury - mousestarty };
-                    SDL_RenderDrawRect(grenderer, &selectbox);
-                    mousemovedwhiledown = true;
                 }
-                SDL_RenderPresent(grenderer);
                 break;
             case SDL_KEYDOWN:
                 switch (e.key.keysym.sym)
@@ -448,25 +418,33 @@ void loop_events()
                     camera_x=camera_x+8;
                     break;
             }
-                tuple_int primary=std::make_tuple(std::round(camera_x/512),
-                                                  std::round(camera_y/512));
-                prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
-                draw_everything(all, primary, draw_maps_storage);
-                SDL_RenderPresent(grenderer);
                 break;
         }
+        primary=std::make_tuple(std::round(camera_x/512),
+                                std::round(camera_y/512));
+        prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+        SDL_RenderClear(grenderer);
+        draw_everything(all, primary, draw_maps_storage);
+        if (mousedown==true)
+        {
+            SDL_Rect selectbox = { mousestartx ,mousestarty,
+                curx - mousestartx,cury - mousestarty };
+            SDL_RenderDrawRect(grenderer, &selectbox);
+            mousemovedwhiledown = true;
+        }
+        SDL_RenderPresent(grenderer);
     }
-    SDL_Delay(10);
 }
+#endif
 int main(int argc, char* argv[])
 {
-#ifdef __EMSCRIPTEN__
-    emscripten_set_main_loop(loop_events,0,1);
-#else
     if (!init(map_width,map_height))
     {
         std::cout<<"Failed to start \n";
     }
+#ifdef EMSCRIPTEN
+    emscripten_set_main_loop(draw,0,1);
+#else
     bool quit=false;
     std::vector<int> common = { 1,2,3,4,0 };
     unit temp(tuple_int(256, 256), 10, 10, 10, 10, 10, 10, 0, 0, 100, 100, 100, tuple_int(-1, -1), common);
@@ -481,10 +459,10 @@ int main(int argc, char* argv[])
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
     draw_everything(all, primary, draw_maps_storage);
     SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-    for (tuple_int coord : all_node_locs)
-    {
-        SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-    }
+    //    for (tuple_int coord : all_node_locs)
+    //    {
+    //        SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
+    //    }
     SDL_RenderPresent(grenderer);
     bool mousedown=false;
     int mousestartx, mousestarty;
@@ -497,19 +475,13 @@ int main(int argc, char* argv[])
             SDL_RenderClear(grenderer);
             if (e.type == SDL_QUIT)
             {
-                quit = true;
+                quit=true;
                 close();
                 break;
             }
             switch (e.type)
             {
                 case SDL_MOUSEBUTTONDOWN:
-                    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                    for (tuple_int coord : all_node_locs)
-                    {
-                        SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                    }
-                    draw_everything(all, primary, draw_maps_storage);
                     switch (e.button.button)
                 {
                     case SDL_BUTTON_LEFT:
@@ -518,33 +490,24 @@ int main(int argc, char* argv[])
                         mousedown = true;
                         break;
                 }
+                    draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);
                     break;
                 case SDL_MOUSEBUTTONUP:
-                    mousedown = false;
-                    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                    for (tuple_int coord : all_node_locs)
-                    {
-                        SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                    }
-                    draw_everything(all, primary, draw_maps_storage);
                     if (mousemovedwhiledown == true)
                     {
                         //select units (
                         mousemovedwhiledown = false;
                     }
+                    mousedown=false;
+                    draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);
                     break;
                 case SDL_MOUSEMOTION:
+                    int curx, cury;
                     draw_everything(all, primary, draw_maps_storage);
-                    SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
-                    for (tuple_int coord : all_node_locs)
-                    {
-                        SDL_RenderDrawPoint(grenderer, std::get<0>(coord), std::get<1>(coord));
-                    }
                     if (mousedown == true)
                     {
-                        int curx, cury;
                         SDL_GetMouseState(&curx, &cury);
                         SDL_Rect selectbox = { mousestartx ,mousestarty,
                             curx - mousestartx,cury - mousestarty };
@@ -570,8 +533,8 @@ int main(int argc, char* argv[])
                         camera_x=camera_x+8;
                         break;
                 }
-                    tuple_int primary=std::make_tuple(std::round(camera_x/512),
-                                                      std::round(camera_y/512));
+                    primary=std::make_tuple(std::round(camera_x/512),
+                                            std::round(camera_y/512));
                     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
                     draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);
@@ -581,6 +544,5 @@ int main(int argc, char* argv[])
         SDL_Delay(10);
     }
 #endif
-	return 0;
+    return 0;
 }
-
