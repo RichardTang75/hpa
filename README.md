@@ -14,7 +14,8 @@ What I have so far are some of the basic building blocks of the game that I'm st
 
 Example picture of seamless generation. Four different maps are being displayed here. As evidenced by scrolling down a bit, the maps now completely mesh with one another.
 
-![fully seamless map](fullyseamless.PNG) (fullyseamless2.PNG)
+![fully seamless map](fullyseamless.PNG) 
+![fully seamless comparison](fullyseamless2.PNG)
 
 
 A picture of the generated nodes used in HPA. Black dots are entrances and exits, black line represents an example path going from 10,10 to 510, 510.
