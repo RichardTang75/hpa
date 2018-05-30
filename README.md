@@ -10,19 +10,11 @@ What I have so far are some of the basic building blocks of the game that I'm st
 * Implementing a version of hierarchical pathfinding (map preprocessing) from a paper [https://webdocs.cs.ualberta.ca/~mmueller/ps/hpastar.pdf]. 
 * Utilized multithreading for both the terrain generation and the preprocessing. For reference, the python version of map generation took about 45 seconds on average, whereas on -O3 this takes about 8.7 seconds.
 * A browser port
+* Finished the seamless map creation
 
-Example picture of seamless generation. Four different maps are being displayed here, as evidenced by the slight discrepancies near the top left. There are still some problems to be worked out, but it shows the gist of the idea.
+Example picture of seamless generation. Four different maps are being displayed here. As evidenced by scrolling down a bit, the maps now completely mesh with one another.
 
-
-![Seamless attempt](seamless.png)
-
-
-A picture of the nonseamless map generation for purposes of comparison. 
-
-
-
-![](nonseamless.png)
-
+![fully seamless map](fullyseamless.PNG) (fullyseamless2.PNG)
 
 
 A picture of the generated nodes used in HPA. Black dots are entrances and exits, black line represents an example path going from 10,10 to 510, 510.
@@ -34,3 +26,12 @@ A picture of the generated nodes used in HPA. Black dots are entrances and exits
 
 
 In progress.
+
+todo:
+explore noise, falloffs
+use thread pooling
+rework path storage
+unit AI
+pathfinding across multiple maps
+cellular noise for nations
+zoom
