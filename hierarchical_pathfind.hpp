@@ -1,4 +1,3 @@
-//
 //  hierarchical_pathfind.hpp
 //  take2
 //

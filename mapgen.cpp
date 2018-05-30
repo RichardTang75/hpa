@@ -12,6 +12,8 @@
 #include "typedef.hpp"
 #include "goodfunctions.hpp"
 #include "terrain.hpp"
+#include "visualtestdebug.hpp"
+#include "libraries\FastNoiseSIMD\FastNoiseSIMD\FastNoiseSIMD.h"
 
 std::vector<tuple_int> directions=
 {
@@ -46,137 +48,19 @@ void terrain_overlap(tuple_set& bottom, tuple_set& top, float threshold=.05 ,int
 		}
 	}
 }
-inline int cardinal_overflow(const int& xStart, const int& xEnd,
-                             const int& yStart, const int& yEnd,
-                             const int& end_x, const int& end_y)
+vectormap noise_map_gen(int map_x, int map_y, int map_width, int map_height, int terrain_type = 0, int seed = 0)
 {
-    int xCard, yCard;
-    std::tie(xCard, yCard)=tuple_int(-1,-1);
-    if (end_x > xEnd)
-    {xCard=East;}
-    else if(end_x < xStart)
-    {xCard=West;}
-    
-    if (end_y > yEnd)
-    {yCard=South;}
-    else if (end_y < yStart)
-    {yCard=North;}
-
-    if (xCard==-1 && yCard == -1)
-    {return -1;}
-    else if (xCard==-1)
-    {return yCard;}
-    else if (yCard==-1)
-    {return xCard;}
-    else
-    {
-        if (xCard==East)
-        {
-            if (yCard==North)
-            {return Northeast;}
-            else
-            {return Southeast;}
-        }
-        else
-        {
-            if (yCard==North)
-            {return Northwest;}
-            else
-            {return Southwest;}
-        }
-    }
+	std::vector<double> starter (map_width*map_height);
 }
-//xStart=bounds of map, start_x=origin of line
-inline void cardinal_emplacer(const int& xStart, const int& xEnd,
-                             const int& yStart, const int& yEnd,
-                             const int& end_x, const int& end_y,
-                             const int& start_x, const int& start_y,
-                             const float& angle,
-                              const Cardinal& direction, std::vector<tuple_set>& neighbors)
+tuple_triple_map get_pertinent_triple(tuple_triple_map& full_triple, int map_x, int map_y, Terrain terrain_type)
 {
-    float dx=start_x-end_x;
-    float dy=start_y-end_y;
-    switch (direction)
-    {
-            //use angle and to_edge and y_overflow to determine the size
-            //huh bresenham would've probably be smarter
-        case North:
-        {
-            int yoverflow=yStart-end_y;
-            int to_edge=start_y-yStart;
-            float slope=dx/dy;
-            int startx=start_x+round(to_edge*slope);
-            for (int i=0; i<yoverflow; ++i)
-            {
-                neighbors[North].emplace(tuple_int(round(startx+slope*i),512-i));
-            }
-            break;
-        }
-        case South:
-        {
-            int yoverflow=end_y-yEnd;
-            int to_edge=yEnd-start_y;
-            float slope=dx/dy;
-            int startx=start_x+round(to_edge*slope);
-            for (int i=0; i<yoverflow; ++i)
-            {
-                neighbors[South].emplace(tuple_int(round(startx+slope*i),i));
-            }
-            break;
-        }
-        case East:
-        {
-            int xoverflow=end_x-xEnd;
-            int to_edge=xEnd-start_x;
-            float slope=dy/dx;
-            int starty=start_y+round(to_edge*slope);
-            for (int i=0; i<xoverflow; ++i)
-            {
-                neighbors[East].emplace(tuple_int(i,round(starty+slope*i)));
-            }
-            break;
-        }
-        case West:
-        {
-            int xoverflow=xStart-end_x;
-            int to_edge=start_x-xStart;
-            float slope=dy/dx;
-            int starty=start_y+round(to_edge*slope);
-            for (int i=0; i<xoverflow; ++i)
-            {
-                neighbors[West].emplace(tuple_int(512-i,round(starty+slope*i)));
-            }
-            break;
-        }
-        case Northeast:
-        {
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, North, neighbors);
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, East, neighbors);
-        }
-        case Northwest:
-        {
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, North, neighbors);
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, West, neighbors);
-        }
-        case Southeast:
-        {
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, South, neighbors);
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, East, neighbors);
-        }
-        case Southwest:
-        {
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, South, neighbors);
-            cardinal_emplacer(xStart,xEnd, yStart,  yEnd,
-                              end_x, end_y, start_x,  start_y,angle, West, neighbors);
-        }
-    }
+	tuple_triple_map to_return;
+	for (tuple_int dir: directions)
+	{
+		auto getting = std::make_tuple(map_x + std::get<0>(dir), map_y + std::get<1>(dir), terrain_type);
+		to_return[getting] = full_triple[getting];
+	}
+	return to_return;
 }
 void step1(const int& map_width, const int& map_height,
 	const int& howmany_min, const int& howmany_max,
@@ -258,14 +142,14 @@ void step1(const int& map_width, const int& map_height,
 	tuple_set_union(to_return, to_union);
 	to_union.clear();
     int size_many = size_chooser(eng);
-    for (int i = 0; i < size_many; ++i)
-    {
-        for (tuple_int coord : to_return)
-        {
-            tuple_set_expand(to_union, coord);
-        }
-        tuple_set_union(to_return, to_union);
-    }
+    //for (int i = 0; i < size_many; ++i)
+    //{
+    //    for (tuple_int coord : to_return)
+    //    {
+    //        tuple_set_expand(to_union, coord);
+    //    }
+    //    tuple_set_union(to_return, to_union);
+    //}
     //std::cout << to_return.size() << "\n";
     tuple_set_union(to_return, to_union);
     to_union.clear();
@@ -274,6 +158,7 @@ void step1(const int& map_width, const int& map_height,
     ////when ligating, take into consideration climes
     ////threads can start new threads if enough cores
     ////eventually preprocess it to fewer nodes using visibility graph
+	
     for (int i = 0; i < (size_many); ++i)
     {
         for (tuple_int coord : to_return)
@@ -291,9 +176,8 @@ void step1(const int& map_width, const int& map_height,
 }
 void step2(const int& map_x, const int& map_y, const int& terrain,
            const int& map_width, const int& map_height,
-           tuple_triple_map& maps)
+           tuple_triple_map& maps, tuple_set& place_here)
 {
-    std::tuple<int, int, int> here = std::make_tuple(map_x, map_y, terrain);
     for (tuple_int dir: directions)
     {
         int dx=std::get<0>(dir);
@@ -302,48 +186,83 @@ void step2(const int& map_x, const int& map_y, const int& terrain,
         tuple_set selected = maps[lookin];
         for (tuple_int coord: selected)
         {
-            int x_new=-1;
-            int y_new=-1;
-            if (dx==1)
-            {
-                if (std::get<0>(coord)<0)
-                {
-                    x_new = 513+std::get<0>(coord);
-                }
-            }
-            else if (dx==-1)
-            {
-                if (std::get<0>(coord)>512)
-                {
-                    x_new=std::get<0>(coord)-513;
-                }
-            }
-            if (dy==1)
-            {
-                if (std::get<1>(coord)<0)
-                {
-                    y_new=513+std::get<1>(coord);
-                }
-            }
-            else if (dy==-1)
-            {
-                if (std::get<1>(coord)>512)
-                {
-                    y_new=std::get<1>(coord)-513;
-                }
-            }
-            if (x_new != -1 && y_new != -1)
-            {
-                (maps[here]).emplace(tuple_int(x_new, y_new));
-            }
-            else if (x_new!= -1 && y_new == -1)
-            {
-                (maps[here]).emplace(tuple_int(x_new, std::get<1>(coord)));
-            }
-            else if (x_new ==-1 && y_new != -1)
-            {
-                (maps[here]).emplace(tuple_int(std::get<0>(coord), y_new));
-            }
+			if (in_bounds(0, map_width, 0, map_height, coord) == false)
+			{
+				int x_new = -1;
+				int y_new = -1;
+				if (dx == 1)
+				{
+					if (map_x == 0 && map_y == 0 && dy==0 && terrain == Mtn)
+					{
+						std::cout << "\n" << std::get<0>(coord) << "," << std::get<1>(coord);
+					}
+					if (std::get<0>(coord)<0)
+					{
+						if (map_x == 0 && map_y == 0 && dy == 0 && terrain == Mtn)
+						{
+							std::cout << "\n HELLO";
+						}
+						x_new = 513 + std::get<0>(coord);
+					}
+				}
+				else if (dx == -1)
+				{
+					if (map_x == 1 && map_y == 0 && dy == 0 && terrain == Mtn)
+					{
+						std::cout << "\n" << std::get<0>(coord) << "," << std::get<1>(coord);
+					}
+					if (std::get<0>(coord)>512)
+					{
+						if (map_x == 1 && map_y == 0 && dy == 0 && terrain == Mtn)
+						{
+							std::cout << "\n NEW HELLO \n";
+						}
+						x_new = std::get<0>(coord) - 513;
+					}
+				}
+				if (dy == 1)
+				{
+					if (std::get<1>(coord)<0)
+					{
+						y_new = 513 + std::get<1>(coord);
+					}
+				}
+				else if (dy == -1)
+				{
+					if (std::get<1>(coord)>512)
+					{
+						y_new = std::get<1>(coord) - 513;
+					}
+				}
+				if (x_new != -1 && y_new != -1)
+				{
+					tuple_int mod_coord = tuple_int(x_new, y_new);
+					if (in_bounds(0, map_width, 0, map_height, mod_coord))
+					{
+						(place_here).emplace(mod_coord);
+					}
+				}
+				else if (abs(dx+dy) == 1) //no diagonals
+				{
+					if (x_new != -1 && y_new == -1)
+					{
+						tuple_int mod_coord = tuple_int(x_new, std::get<1>(coord));
+						if (in_bounds(0, map_width, 0, map_height, mod_coord))
+						{
+							(place_here).emplace(mod_coord);
+						}
+					}
+					else if (x_new == -1 && y_new != -1)
+					{
+						tuple_int mod_coord = tuple_int(std::get<0>(coord), y_new);
+						if (in_bounds(0, map_width, 0, map_height, mod_coord))
+						{
+							(place_here).emplace(mod_coord);
+						}
+					}
+				}
+				
+			}
         }
     }
 }
@@ -377,7 +296,7 @@ void get_full_map(const int& map_x, const int& map_y,
             
             step1 (map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
                    std::ref(maps[std::make_tuple(map_x, map_y, Fst)]), seeds[seed_start+0]);
-            step1 (map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+            step1 (map_width, map_height, 1, 2, 3, 5, 68, 86, 3, 5,
                    std::ref(maps[std::make_tuple(map_x, map_y, Mtn)]), seeds[seed_start+1]);
             step1 (map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
                    std::ref(maps[std::make_tuple(map_x, map_y, Wtr)]), seeds[seed_start+2]);
@@ -394,7 +313,7 @@ void get_full_map(const int& map_x, const int& map_y,
             {
                 step1 (map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
                        std::ref(maps[std::make_tuple(desired_x, desired_y, Fst)]), seeds[seed_start+0]);
-                step1 (map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+                step1 (map_width, map_height, 1, 2, 3, 5, 68, 86, 3, 5,
                        std::ref(maps[std::make_tuple(desired_x, desired_y, Mtn)]), seeds[seed_start+1]);
                 step1 (map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
                        std::ref(maps[std::make_tuple(desired_x, desired_y, Wtr)]), seeds[seed_start+2]);
@@ -415,7 +334,7 @@ void get_full_map(const int& map_x, const int& map_y,
 
             std::thread gen_fst (step1, map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
                                  std::ref(maps[std::make_tuple(map_x, map_y, Fst)]), seeds[seed_start+0]);
-            std::thread gen_mtn (step1, map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+            std::thread gen_mtn (step1, map_width, map_height, 1, 2, 3, 5, 68, 86, 3, 5,
                                  std::ref(maps[std::make_tuple(map_x, map_y, Mtn)]), seeds[seed_start+1]);
             std::thread gen_wtr (step1, map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
                                  std::ref(maps[std::make_tuple(map_x, map_y, Wtr)]), seeds[seed_start+2]);
@@ -425,6 +344,10 @@ void get_full_map(const int& map_x, const int& map_y,
             gen_mtn.join();
             gen_wtr.join();
             gen_msh.join();
+			if (tuple_int(map_x, map_y) == tuple_int(0, 0))
+			{
+				checkthis(maps[std::make_tuple(map_x, map_y, Mtn)], map_x, map_y, 512, 512);
+			}
             created.emplace(tuple_int(map_x, map_y));
             seed_start=seed_start+4;
         }
@@ -436,7 +359,7 @@ void get_full_map(const int& map_x, const int& map_y,
             {
                 std::thread gen_fst (step1, map_width, map_height, 6, 12, 2, 4, 5, 10, 14, 18,
                                      std::ref(maps[std::make_tuple(desired_x, desired_y, Fst)]), seeds[seed_start+0]);
-                std::thread gen_mtn (step1, map_width, map_height, 1, 2, 3, 5, 68, 86, 7, 10,
+                std::thread gen_mtn (step1, map_width, map_height, 1, 2, 3, 5, 68, 86, 3, 5,
                                      std::ref(maps[std::make_tuple(desired_x, desired_y, Mtn)]), seeds[seed_start+1]);
                 std::thread gen_wtr (step1, map_width, map_height, 2, 3, 2, 4, 8, 16, 16, 24,
                                      std::ref(maps[std::make_tuple(desired_x, desired_y, Wtr)]), seeds[seed_start+2]);
@@ -446,19 +369,39 @@ void get_full_map(const int& map_x, const int& map_y,
                 gen_mtn.join();
                 gen_wtr.join();
                 gen_msh.join();
+				if (tuple_int(map_x, map_y) == tuple_int(0, 0))
+				{
+					checkthis(maps[std::make_tuple(desired_x, desired_y, Mtn)], desired_x, desired_y, 512, 512);
+				}
                 created.emplace(tuple_int (desired_x, desired_y));
                 seed_start=seed_start+4;
-
             }
         }//thread here too
-        std::thread finish_fst (step2, map_x, map_y, Fst, map_width, map_height, std::ref(maps));
-        std::thread finish_mtn (step2, map_x, map_y, Mtn, map_width, map_height, std::ref(maps));
-        std::thread finish_wtr (step2, map_x, map_y, Wtr, map_width, map_height, std::ref(maps));
-        std::thread finish_msh (step2, map_x, map_y, Msh, map_width, map_height, std::ref(maps));
+		tuple_set place_fst, place_mtn, place_wtr, place_msh;
+		//constant rewrites?
+		tuple_triple_map fst_maps = get_pertinent_triple(maps, map_x, map_y, Fst);
+		tuple_triple_map mtn_maps = get_pertinent_triple(maps, map_x, map_y, Mtn);
+		tuple_triple_map wtr_maps = get_pertinent_triple(maps, map_x, map_y, Wtr);
+		tuple_triple_map msh_maps = get_pertinent_triple(maps, map_x, map_y, Msh);
+		//assert(-1 == 1);
+        std::thread finish_fst (step2, map_x, map_y, Fst, map_width, map_height, std::ref(fst_maps), std::ref(place_fst));
+        std::thread finish_mtn (step2, map_x, map_y, Mtn, map_width, map_height, std::ref(mtn_maps), std::ref(place_mtn));
+        std::thread finish_wtr (step2, map_x, map_y, Wtr, map_width, map_height, std::ref(wtr_maps), std::ref(place_wtr));
+		std::thread finish_msh (step2, map_x, map_y, Msh, map_width, map_height, std::ref(msh_maps), std::ref(place_msh));
         finish_fst.join();
         finish_mtn.join();
         finish_wtr.join();
         finish_msh.join();
+		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Fst)]), place_fst);
+		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Mtn)]), place_mtn);
+		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Wtr)]), place_wtr);
+		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Msh)]), place_msh);
+		if (map_x == 0 && map_y == 0)
+		{
+			std::cout << "\n\n\n\nHIYA\n\n\n\n";
+			std::cout << maps[std::make_tuple(0, 0, Mtn)].size()<<"\n";
+			std::cout << maps[std::make_tuple(1, 0, Mtn)].size();
+		}
 #endif
 		//std::cout<<"Joined";
         processed.emplace(map_x, map_y);
@@ -496,11 +439,11 @@ std::tuple<std::vector<tuple_set>, vectormap> map_controller
 		{
 			if (it2 == 3)
 			{
-				terrain_overlap(terrain_overlap_decider[it], terrain_overlap_decider[it2], .15);
+				continue;
 			}
 			else
 			{
-				terrain_overlap(terrain_overlap_decider[it], terrain_overlap_decider[it2], .075);
+				terrain_overlap(terrain_overlap_decider[it], terrain_overlap_decider[it2], .375);
 			}
 		}
 	}

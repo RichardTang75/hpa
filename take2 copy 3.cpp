@@ -15,6 +15,7 @@
 #include "mapgen.hpp"
 #include "goodfunctions.hpp"
 #include "hierarchical_pathfind.hpp"
+#include "FastNoise.h"
 #ifdef _WIN32
 #include <SDL.h>
 #else
@@ -163,6 +164,7 @@ void back_text::surface_processing(std::string path, tuple_set& to_add, std::str
     }
     int scanline=(temp->pitch)/4;
     Uint8 red,green,blue;
+	Uint8 nothing, alpha;
     Uint32* dstpixels=(Uint32*)temp->pixels;
     for (tuple_int coord: to_add)
     {
@@ -438,10 +440,23 @@ void draw(void)
 #endif
 int main(int argc, char* argv[])
 {
+	FastNoise myNoise; // Create a FastNoise object
+	myNoise.SetNoiseType(FastNoise::SimplexFractal); // Set the desired noise type
+
+	float heightMap[32][32]; // 2D heightmap to create terrain
+
+	for (int x = 0; x < 32; x++)
+	{
+		for (int y = 0; y < 32; y++)
+		{
+			heightMap[x][y] = myNoise.GetNoise(x, y);
+		}
+	}
     if (!init(map_width,map_height))
     {
         std::cout<<"Failed to start \n";
     }
+	auto t1 = std::chrono::high_resolution_clock::now();
 #ifdef EMSCRIPTEN
     emscripten_set_main_loop(draw,0,1);
 #else
@@ -457,6 +472,8 @@ int main(int argc, char* argv[])
     tuple_set processed;
     tuple_set created;
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::cout << "\nMap generation took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
     draw_everything(all, primary, draw_maps_storage);
     SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0x00, 0xFF);
     //    for (tuple_int coord : all_node_locs)
@@ -520,7 +537,6 @@ int main(int argc, char* argv[])
                     switch (e.key.keysym.sym)
                 {
                     case SDLK_UP:
-                        std::cout << "UP";
                         camera_y=camera_y-8;
                         break;
                     case SDLK_DOWN:
@@ -532,6 +548,9 @@ int main(int argc, char* argv[])
                     case SDLK_RIGHT:
                         camera_x=camera_x+8;
                         break;
+					case SDLK_w:
+						std::cout << "\n" << camera_x << "," << camera_y;
+						break;
                 }
                     primary=std::make_tuple(std::round(camera_x/512),
                                             std::round(camera_y/512));

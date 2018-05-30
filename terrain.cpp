@@ -29,7 +29,7 @@ void tuple_set_remove(tuple_set& in, tuple_int& coord)
 	in.erase(coord);
 	std::vector<tuple_int> directions =
 	{
-		tuple_int(-1,0),tuple_int(0,-1),tuple_int(0,1),tuple_int(1,0),
+		//tuple_int(-1,0),tuple_int(0,-1),tuple_int(0,1),tuple_int(1,0),
 		/*tuple_int(-1,1),tuple_int(-1,-1),tuple_int(1,1),tuple_int(1,-1),
 		tuple_int(-2,0),tuple_int(2,0),tuple_int(0,-2),tuple_int(0,2),
 		tuple_int(-2,1),tuple_int(-2,-1),tuple_int(2,1),tuple_int(2,-1),
