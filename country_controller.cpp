@@ -7,7 +7,7 @@
 //
 
 #include "goodfunctions.hpp"
-
+#include "typedef.hpp"
 #include "hierarchical_pathfind.hpp"
 #include "boost/functional.hpp"
 #include <iostream>
@@ -18,10 +18,21 @@
 #include <SDL2/SDL.h>
 #include <SDL_image.h>
 #endif
+
+//roles anvil, cavalry, shock, infantry, ranged, skirmisher, artillery?
+//defensive, wait for infantry contact, focus on ranged?
+//offensive, cav first, everyone in
+//maneuver, infantry to split off sections?
+enum class unit_type 
+{
+	infantry, cavalry, ranged, skirmisher, shock
+};
+
 class unit_modifier //perhaps experience n shit
 {
 };
 class unit
+	//automatic unit-level when no active orders?
 {
 public:
 	unit(tuple_int start, int speed, int finesse, int power, int armr, int rng, int disc, int end_per_dmg, int mor_per_dmg,
@@ -33,7 +44,7 @@ public:
 	void routing(int xstart, int ystart, int xend, int yend, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size);
 	void routed(void);
 	void exhausted(void);
-	void render(SDL_Renderer*);
+	void render(SDL_Renderer*, int camera_x, int camera_y);
 	tuple_int get_pos(void);
 private:
     int x,y,base_speed,base_finesse,base_power,armor,range,discipline,end_per,mor_per;
@@ -49,6 +60,7 @@ private:
     //int new_move_count=5; do i need this with HPA?
     int reform_count;
 	std::vector<int> t_mobility;
+	bool selected;
 };
 unit::unit(tuple_int start, int speed, int finesse, int power, int armr, int rng, int disc, int end_per_dmg, int mor_per_dmg,
 	float shealth, float sendurance, float smorale, tuple_int dir_start, std::vector<int> mobility)
@@ -153,10 +165,12 @@ void unit::exhausted(void)
 	effective_finesse = (base_finesse + base_finesse*(exhaust)) / 2;
 	effective_power = (base_power + base_power + base_power*exhaust) / 3;
 }
-void unit::render(SDL_Renderer* sdlrend)
+void unit::render(SDL_Renderer* sdlrend, int camera_x, int camera_y)
 {
 	std::vector<tuple_int> outline;
 	std::vector<tuple_int> points;
+	//std::vector<SDL_Point> to_draw_outline;
+	//std::vector<SDL_Point> to_draw_inside;
 	tuple_int empty;
 	if (to == empty)
 	{
@@ -169,14 +183,15 @@ void unit::render(SDL_Renderer* sdlrend)
 		{
 			if (width == -3 or height == -2 or height == 2 or width == 3)
 			{
-				outline.push_back(tuple_int(x + width*(-1)*(percent_y)+height*percent_x,
-											y + height*(-1)*(percent_y)+width*percent_x));
+				outline.push_back(tuple_int(x - camera_x + width*(-1)*(percent_y)+height*percent_x,
+											y - camera_y + height*(-1)*(percent_y)+width*percent_x));
 				//the negative one is because up is negative
 			}
 			else
 			{
-				points.push_back(tuple_int(x + width*(-1)*(percent_y)+height*percent_x,
-											y + height*(-1)*(percent_y)+width*percent_x));
+				//SDL_Point temp = (x - camera_x + width*(-1)*(percent_y)+height*percent_x, y - camera_y + height*(-1)*(percent_y)+width*percent_x);
+				points.push_back(tuple_int(x - camera_x + width*(-1)*(percent_y)+height*percent_x,
+											y - camera_y + height*(-1)*(percent_y)+width*percent_x));
 			}
 		}
 	}

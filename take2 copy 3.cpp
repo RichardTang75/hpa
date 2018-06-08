@@ -33,14 +33,18 @@ int map_width = 512;
 int map_height = 512;
 float camera_x = 0;
 float camera_y = 0;
+int VIEW_HEIGHT = 512;
+int VIEW_WIDTH = 512;
 std::vector<std::vector<int>> possible_move_costs =
 {
 	{ 1,2,3,4,0 }, //basic move cost-used by fire and metal
 	{ 1,1,2,4,0 }, //wood
 	{ 1,2,2,4,2 }, //water
-	{ 1,2,2,4,0 } //earth
+	{ 1,2,2,4,0 } //earthmap
 };
 tuple_set all_node_locs;
+std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> big_map_storage;
+std::unordered_map<tuple_int, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>, boost::hash<tuple_int>> map_set_storage;
 SDL_Window* gwindow = NULL;
 SDL_Renderer* grenderer = NULL;
 class back_text
@@ -116,10 +120,7 @@ void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tup
     sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, maps, created, processed);
     std::vector<tuple_set> temp_map = std::get<0>(sets_map);
     vectormap map = std::get<1>(sets_map);
-    //    if (retrieve==tuple_int(0,0))
-    //    {
-    //        map_stuff(map_width, map_height, map, all_node_locs);
-    //    }
+	big_map_storage[retrieve] = map;
     tuple_set forest, mount, water, marsh;
     forest = temp_map[0];
     mount = temp_map[1];
@@ -266,7 +267,12 @@ void draw_everything(std::vector<unit>& all,
     SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
     for (unit i : all)
     {
-        i.render(grenderer);
+		int unit_x, unit_y;
+		std::tie(unit_x, unit_y) = i.get_pos();
+		if (in_bounds(camera_x, camera_x + VIEW_WIDTH, camera_y, camera_y + VIEW_HEIGHT, unit_x, unit_y))
+		{
+			i.render(grenderer, camera_x, camera_y);
+		}
     }
     std::vector<tuple_int> to_draw;
     if (camera_x-std::get<0>(primary)*map_width>0)
@@ -440,18 +446,6 @@ void draw(void)
 #endif
 int main(int argc, char* argv[])
 {
-	FastNoise myNoise; // Create a FastNoise object
-	myNoise.SetNoiseType(FastNoise::SimplexFractal); // Set the desired noise type
-
-	float heightMap[32][32]; // 2D heightmap to create terrain
-
-	for (int x = 0; x < 32; x++)
-	{
-		for (int y = 0; y < 32; y++)
-		{
-			heightMap[x][y] = myNoise.GetNoise(x, y);
-		}
-	}
     if (!init(map_width,map_height))
     {
         std::cout<<"Failed to start \n";
@@ -469,9 +463,40 @@ int main(int argc, char* argv[])
                                       std::round(camera_y/512));
     tuple_triple_map maps;
     texture_storage draw_maps_storage;
+
+
     tuple_set processed;
     tuple_set created;
+	node_retrieval nodes;
+	tuple_set preprocessed_maps;
+
+	//Look into whether I need processed and preprocessed maps
+
     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+
+	std::vector<int> basic = { 1,2,3,4,0 };
+
+
+	if ((primary == tuple_int(0, 0)) && (preprocessed_maps.count(primary) == 0))
+	{
+		std::vector<std::vector<int>> possible_move_costs =
+		{
+			{ 1,2,3,4,0 }, //basic move cost-used by fire and metal
+			{ 1,1,2,4,0 }, //wood
+			{ 1,2,2,4,2 }, //water
+			{ 1,2,2,4,0 } //earth
+		};
+		std::cout << std::get<0>(primary) << "," << std::get<1>(primary);
+		int cut_size = 64;
+		preprocessed_maps.emplace(primary);
+		std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> map_set = cut(big_map_storage[primary], map_width, map_height, cut_size);
+		map_set_storage[primary] = map_set;
+		nodes = entrances(map_set, big_map_storage[primary], cut_size, false, 0, 0, map_width / cut_size, map_height / cut_size, possible_move_costs);
+	}
+
+
+
+
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::cout << "\nMap generation took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
     draw_everything(all, primary, draw_maps_storage);
@@ -483,11 +508,12 @@ int main(int argc, char* argv[])
     SDL_RenderPresent(grenderer);
     bool mousedown=false;
     int mousestartx, mousestarty;
+	int mouseposx, mouseposy;
     bool mousemovedwhiledown=false;
     SDL_Event e;
     while (!quit)
     {
-        while (SDL_PollEvent(&e) != 0)
+		while (SDL_PollEvent(&e) != 0)
         {
             SDL_RenderClear(grenderer);
             if (e.type == SDL_QUIT)
@@ -504,8 +530,19 @@ int main(int argc, char* argv[])
                     case SDL_BUTTON_LEFT:
                         SDL_GetMouseState(&mousestartx, &mousestarty);
                         std::cout << mousestartx << "," << mousestarty;
-                        mousedown = true;
+						mousedown = true;
                         break;
+					case SDL_BUTTON_RIGHT:
+						//will never fire before finding out primary
+						SDL_GetMouseState(&mouseposx, &mouseposy);
+						for (unit acting : selected)
+						{
+							tuple_int destination = tuple_int(mouseposx + camera_x, mouseposy + camera_y);
+							int destination_map_x = (mouseposx + camera_x) / 512;
+							int destination_map_y = (mouseposy + camera_y) / 512;
+							acting.set_move_target(destination, nodes,
+								map_set_storage[tuple_int(destination_map_x, destination_map_y)], 1, 64);
+						}
                 }
                     draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);
@@ -516,7 +553,9 @@ int main(int argc, char* argv[])
                         //select units (
                         mousemovedwhiledown = false;
                     }
+					SDL_GetMouseState(&mouseposx, &mouseposy);
                     mousedown=false;
+					selected = in_box(mousestartx, mousestarty, mouseposx, mouseposy, all);
                     draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);
                     break;
@@ -554,6 +593,24 @@ int main(int argc, char* argv[])
                 }
                     primary=std::make_tuple(std::round(camera_x/512),
                                             std::round(camera_y/512));
+
+					//&& (preprocessed_maps.count(primary)==0)
+					if ((primary == tuple_int(0, 0)) && (preprocessed_maps.count(primary) == 0))
+					{
+						preprocessed_maps.emplace(primary);
+						std::vector<std::vector<int>> possible_move_costs =
+						{
+							{ 1,2,3,4,0 }, //basic move cost-used by fire and metal
+							{ 1,1,2,4,0 }, //wood
+							{ 1,2,2,4,2 }, //water
+							{ 1,2,2,4,0 } //earth
+						};
+						int cut_size = 64;
+						std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> map_set = cut(big_map_storage[primary], map_width, map_height, cut_size);
+						nodes = entrances(map_set, big_map_storage[primary], cut_size, false, 0, 0, map_width / cut_size, map_height / cut_size, possible_move_costs);
+					}
+
+
                     prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
                     draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);

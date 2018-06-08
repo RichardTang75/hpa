@@ -15,6 +15,7 @@
 #include <boost/functional/hash.hpp>
 #include <unordered_map>
 
+
 typedef std::tuple<int, int> tuple_int;
 typedef std::unordered_set<tuple_int, boost::hash<tuple_int>> tuple_set;
 typedef std::vector<std::vector<int>> vectormap;

@@ -142,14 +142,14 @@ void step1(const int& map_width, const int& map_height,
 	tuple_set_union(to_return, to_union);
 	to_union.clear();
     int size_many = size_chooser(eng);
-    //for (int i = 0; i < size_many; ++i)
-    //{
-    //    for (tuple_int coord : to_return)
-    //    {
-    //        tuple_set_expand(to_union, coord);
-    //    }
-    //    tuple_set_union(to_return, to_union);
-    //}
+    for (int i = 0; i < size_many; ++i)
+    {
+        for (tuple_int coord : to_return)
+        {
+            tuple_set_expand(to_union, coord);
+        }
+        tuple_set_union(to_return, to_union);
+    }
     //std::cout << to_return.size() << "\n";
     tuple_set_union(to_return, to_union);
     to_union.clear();
@@ -192,31 +192,15 @@ void step2(const int& map_x, const int& map_y, const int& terrain,
 				int y_new = -1;
 				if (dx == 1)
 				{
-					if (map_x == 0 && map_y == 0 && dy==0 && terrain == Mtn)
-					{
-						std::cout << "\n" << std::get<0>(coord) << "," << std::get<1>(coord);
-					}
 					if (std::get<0>(coord)<0)
 					{
-						if (map_x == 0 && map_y == 0 && dy == 0 && terrain == Mtn)
-						{
-							std::cout << "\n HELLO";
-						}
 						x_new = 513 + std::get<0>(coord);
 					}
 				}
 				else if (dx == -1)
 				{
-					if (map_x == 1 && map_y == 0 && dy == 0 && terrain == Mtn)
-					{
-						std::cout << "\n" << std::get<0>(coord) << "," << std::get<1>(coord);
-					}
 					if (std::get<0>(coord)>512)
 					{
-						if (map_x == 1 && map_y == 0 && dy == 0 && terrain == Mtn)
-						{
-							std::cout << "\n NEW HELLO \n";
-						}
 						x_new = std::get<0>(coord) - 513;
 					}
 				}
@@ -396,12 +380,6 @@ void get_full_map(const int& map_x, const int& map_y,
 		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Mtn)]), place_mtn);
 		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Wtr)]), place_wtr);
 		tuple_set_union(std::ref(maps[std::make_tuple(map_x, map_y, Msh)]), place_msh);
-		if (map_x == 0 && map_y == 0)
-		{
-			std::cout << "\n\n\n\nHIYA\n\n\n\n";
-			std::cout << maps[std::make_tuple(0, 0, Mtn)].size()<<"\n";
-			std::cout << maps[std::make_tuple(1, 0, Mtn)].size();
-		}
 #endif
 		//std::cout<<"Joined";
         processed.emplace(map_x, map_y);

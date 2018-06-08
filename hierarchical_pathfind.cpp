@@ -683,7 +683,8 @@ path_with_cost hierarchical_pathfind(tuple_int& to, tuple_int& from,std::vector<
 		//gotta get to closest_node for the first level
 		if (i == 1)
 		{
-			to_add = a_pathfind_controller(mapset[which_map(from, 1, cut_size)], from, closest.location, movecosts);
+			tuple_int cut_map = which_map(from, 1, cut_size);
+			to_add = a_pathfind_controller(mapset[cut_map], from, closest.location, movecosts, std::get<0>(cut_map)*cut_size, std::get<1>(cut_map)*cut_size);
 		}
 		//gets to closest_node for the next levels
 		else

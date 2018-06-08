@@ -28,7 +28,7 @@ public:
 	void routing(int xstart, int ystart, int xend, int yend, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size);
 	void routed(void);
 	void exhausted(void);
-	void render(SDL_Renderer* sdlrend);
+	void render(SDL_Renderer* sdlrend, int camera_x, int camera_y);
 	tuple_int get_pos(void);
 private:
 private:
