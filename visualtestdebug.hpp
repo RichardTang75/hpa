@@ -9,7 +9,7 @@
 #ifndef visualtestdebug_hpp
 #define visualtestdebug_hpp
 
-void checkthis(tuple_set& in, int map_x, int map_y, int rows, int cols);
+void checkthis(vectormap& in, int map_x, int map_y, int rows, int cols);
 
 #endif		
 /* visualtestdebug_hpp */

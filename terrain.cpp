@@ -22,6 +22,19 @@ void tuple_set_expand(tuple_set& in, tuple_int& coord)
     in.emplace(tuple_int(cur_x,cur_y+1));
     in.emplace(tuple_int(cur_x,cur_y-1));
 }
+void sized_tuple_set_expand(tuple_set& in, tuple_int& coord, int size)
+{
+	int cur_x = std::get<0>(coord);
+	int cur_y = std::get<1>(coord);
+	for (int i = -size; i < size; i++)
+	{
+		int startj = abs(abs(i) - size);
+		for (int j = -startj; j < startj; j++)
+		{
+			in.emplace(cur_x + i, cur_y + j);
+		}
+	}
+}
 void tuple_set_remove(tuple_set& in, tuple_int& coord)
 {
 	int cur_x = std::get<0>(coord);
@@ -81,7 +94,7 @@ void bresenham_expand(tuple_set& in, tuple_int& coord, float& angle)
 {
 	int passed_x = std::get<0>(coord);
 	int passed_y = std::get<1>(coord);
-	int radius = 5; //small but noticeable protrusions. Many of them.
+	int radius = 4; //small but noticeable protrusions. Many of them.
 	int circle_x = radius*cos(angle) + passed_x;
 	int circle_y = radius*sin(angle) + passed_y;
 	int startx = std::min(passed_x, circle_x);

@@ -23,9 +23,39 @@
 //defensive, wait for infantry contact, focus on ranged?
 //offensive, cav first, everyone in
 //maneuver, infantry to split off sections?
+std::vector<int> atk_incl_heavy_cav{ 3, 1, 5, 0 };
+//ATTACKING
+//diversion is only from above
+//forced attack on nearest is only from above
+//opportunistic, routing, elite shock decap, normal (semi-opportunistic, attack nearest unless don't want to)
+
+//DEFENDING
+//guard
+//area defense, defense, following defense, ambushing defense
+//following vs pulling back>atk vs defense scores/type
+//hold, pull back?
+
+//MOVING SCOUTING
+//draw line between enemy camp and self camp, follow vector?
+//scout, offensive scout, defensive scout, normal scout (move command)
+
+
+//MOVING AWAY
+//retreat, false-retreat, rout
+
+//wheeling around to good spots?
+//swarm
+//better generals> more orders, faster orders
+//self defined maneuver
+
 enum class unit_type 
 {
 	infantry, cavalry, ranged, skirmisher, shock
+};
+//maybe tie this to unit type?
+enum class attack_preference
+{
+	opportunistic, normal, decapitation, pursuit
 };
 
 class unit_modifier //perhaps experience n shit
@@ -38,7 +68,7 @@ public:
 	unit(tuple_int start, int speed, int finesse, int power, int armr, int rng, int disc, int end_per_dmg, int mor_per_dmg,
 		float shealth, float sendurance, float smorale, tuple_int dir_start, std::vector<int> mobility);
 	void move(void);
-	~unit();
+	//~unit();
 	void set_move_target(tuple_int& to, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size);
 	void attack(unit& other);
 	void routing(int xstart, int ystart, int xend, int yend, node_retrieval& nodes, std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>>& mapset, int max_depth, int cut_size);
@@ -46,21 +76,30 @@ public:
 	void exhausted(void);
 	void render(SDL_Renderer*, int camera_x, int camera_y);
 	tuple_int get_pos(void);
+	void update(void);
+	void set_attack_target(void);
+	void maintain_distance(void);
 private:
     int x,y,base_speed,base_finesse,base_power,armor,range,discipline,end_per,mor_per;
     float effective_finesse,effective_speed, effective_power;
     int rotation, mode;
 	int length, height;
+	int atk_inclination, def_inclination, move_inclination, retreat_inclination;
     float health,endurance,morale;
     float mhealth, mendurance, mmorale;
     tuple_int dir_deployed_from; //for retreating and etc.
     float percent_x,percent_y;
     tuple_int to;
+	tuple_int self_chosen_to;
     path_with_cost current_path;
+	unit* attack_target;
+	unit* self_chosen_attack_target;
     //int new_move_count=5; do i need this with HPA?
     int reform_count;
 	std::vector<int> t_mobility;
 	bool selected;
+	bool commanded;
+	attack_preference attitude;
 };
 unit::unit(tuple_int start, int speed, int finesse, int power, int armr, int rng, int disc, int end_per_dmg, int mor_per_dmg,
 	float shealth, float sendurance, float smorale, tuple_int dir_start, std::vector<int> mobility)
@@ -100,6 +139,10 @@ void unit::set_move_target(tuple_int& to, node_retrieval& nodes, std::unordered_
 	}*/
 	tuple_int from = tuple_int(x, y);
 	current_path = hierarchical_pathfind(to, from, t_mobility, mapset, max_depth, cut_size, nodes);
+}
+void unit::set_attack_target()
+{
+
 }
 void unit::attack(unit& other)
 {
@@ -205,6 +248,23 @@ void unit::render(SDL_Renderer* sdlrend, int camera_x, int camera_y)
 	{
 		SDL_RenderDrawPoint(sdlrend, std::get<0>(tup), std::get<1>(tup));
 	}
+}
+void unit::update(void)
+{
+	if (commanded == false)
+	{
+
+	}
+	//std::vector<int> inclinations{ atk_inclination, def_inclination, move_inclination, retreat_inclination };
+	//if (std::max_element(inclinations.begin(), inclinations.end()) == retreat_inclination)
+	//{
+	//	//routing
+	//}
+	//else if (std::max_element(inclinations.begin(), inclinations.end()) == atk_inclination)
+	//{
+
+	//}
+	//retreat, attack, move, defend, (orders are a boost to one of these dependent upon discipline)
 }
 class country_controller{
 private:

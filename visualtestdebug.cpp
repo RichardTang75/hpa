@@ -49,12 +49,14 @@ void array_img(std::vector<std::vector<int>>& array, std::vector<unsigned char>&
 	}
 }
 
-void checkthis(tuple_set& in, int map_x, int map_y, int rows, int cols)
+void checkthis(vectormap& in, int map_x, int map_y, int rows, int cols)
 {
+	///set up the base
+	//union it. set constraints on the other terrains.  (only add the initial if inside where you want)
 	std::string filename = "cplus " + std::to_string(map_x) + " , " + std::to_string(map_y) + " .png";
 	std::vector<unsigned char> img(4 * rows*cols);
-	vectormap map = set_to_vectormap(in, rows, cols);
-	array_img(map, img, rows, cols);
+	//vectormap map = set_to_vectormap(in, rows, cols);
+	array_img(in, img, rows, cols);
 	unsigned error = lodepng::encode(filename.c_str(), img, rows, cols);
 	if (error)
 	{

@@ -391,7 +391,7 @@ node_retrieval entrances(std::unordered_map<tuple_int, vectormap, boost::hash<tu
     std::unordered_map<pf_node_key,pf_node,pf_node_key::hash> graph_nodes;
     std::unordered_map<local_node_key,std::vector<pf_node_key>,local_node_key::hash> nodes_in_map;
     std::vector<pf_node_key> nodes_in_this_section;
-    for (auto which_map:map_set)
+    for (auto &which_map:map_set)
     {
         which=which_map.first;
 		std::cout << "\n"<<std::get<0>(which) <<","<< std::get<1>(which);
@@ -492,7 +492,7 @@ node_retrieval entrances(std::unordered_map<tuple_int, vectormap, boost::hash<tu
             }
 		}
 		threads.clear();
-		for (node_retrieval nr : subset_retrievals)
+		for (node_retrieval& nr : subset_retrievals)
 		{
 			std::unordered_map<pf_node_key, pf_node, pf_node_key::hash> subset_nodes=nr.all_nodes;
 			std::unordered_map<local_node_key, std::vector<pf_node_key>, local_node_key::hash> subset_local=nr.local_nodes;
@@ -523,14 +523,14 @@ pf_node closest_pf_node(tuple_int& where_to, tuple_int& where_from, vectormap& w
     access_key.t_mobility=movecosts;
     std::vector<pf_node_key> keys_nearby_nodes=local_nodes[access_key];
 	std::vector<pf_node> nearby_nodes;
-	for (pf_node_key key : keys_nearby_nodes)
+	for (pf_node_key& key : keys_nearby_nodes)
 	{
 		nearby_nodes.push_back(all_nodes[key]);
 	}
     float cost;
     float best_cost=-1;
     pf_node best;
-    for (pf_node node:nearby_nodes)
+    for (pf_node& node:nearby_nodes)
     {
         cost=calc_cost(where_to,node.location);
         if (cost<best_cost or best_cost==-1)
@@ -638,7 +638,7 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
 	path = previous;
 	pf_node path_next;
 	path_next = visits[path];
-	for (pf_edge edge : path.associated_edges) {
+	for (pf_edge &edge : path.associated_edges) {
 		if (all_nodes[edge.key_to] == path_next)
 		{
 			to_return.insert(to_return.end(), edge.path.rbegin(), edge.path.rend());
@@ -649,7 +649,7 @@ path_with_cost pf_node_pathfind(pf_node& start, tuple_int& to,
 	{
 		path = path_next;
 		path_next = visits[path];
-		for (pf_edge edge : path.associated_edges) {
+		for (pf_edge &edge : path.associated_edges) {
 			if (all_nodes[edge.key_to] == path_next)
 			{
 				//std::cout << "\nYo watup" << std::get<0>(path.location) << "," << std::get<1>(path.location) << ":" << edge.path.size() << "||" << std::get<0>(path_next.location) << "," << std::get<1>(path_next.location);

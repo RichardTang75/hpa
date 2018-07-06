@@ -56,7 +56,7 @@ public:
 	void free();
 	void surface_processing(std::string path, tuple_set& to_add, std::string features = "", int seed = 0, float hurdle = .001);
 	void simple_load(std::string path);
-	void load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed);
+	void load_background(tuple_int& retrieve, tuple_triple_map& maps);
 	void make_text(void);
 	void render(int x, int y);
 	int get_width();
@@ -114,24 +114,19 @@ void back_text::simple_load(std::string path)
     SDL_FreeSurface(t_surf);
     t_surf=IMG_Load(path.c_str());
 }
-void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps, tuple_set& created, tuple_set& processed)
+void back_text::load_background(tuple_int& retrieve, tuple_triple_map& maps)
 {
-    std::tuple<std::vector<tuple_set>, vectormap> sets_map;
-    sets_map = map_controller(std::get<0>(retrieve), std::get<1>(retrieve), map_width, map_height, maps, created, processed);
-    std::vector<tuple_set> temp_map = std::get<0>(sets_map);
-    vectormap map = std::get<1>(sets_map);
-	big_map_storage[retrieve] = map;
     tuple_set forest, mount, water, marsh;
-    forest = temp_map[0];
-    mount = temp_map[1];
-    water = temp_map[2];
-    marsh = temp_map[3];
+    forest = maps[std::make_tuple(std::get<0>(retrieve), std::get<1>(retrieve), Fst)];
+    mount = maps[std::make_tuple(std::get<0>(retrieve), std::get<1>(retrieve), Mtn)];
+    water = maps[std::make_tuple(std::get<0>(retrieve), std::get<1>(retrieve), Wtr)];
+    marsh = maps[std::make_tuple(std::get<0>(retrieve), std::get<1>(retrieve), Msh)];
     simple_load("assets/grass1t.png");
     //maybe surface_procesing should return the surface so I can then thread this, then sequentially blit
+	surface_processing("assets/water1t.png", water);
     surface_processing("assets/marsh1t.png", marsh);
     surface_processing("assets/forest1t.png", forest);
     surface_processing("assets/mount1t.png", mount);
-    surface_processing("assets/water1t.png", water);
     make_text();
 }
 void back_text::make_text()
@@ -245,7 +240,7 @@ void close()
 std::vector<unit> in_box(int startx, int starty, int endx, int endy, std::vector<unit>& all_units)
 {
     std::vector<unit> selected;
-    for (unit possible : all_units)
+    for (unit& possible : all_units)
     {
         int unit_x, unit_y;
         std::tie(unit_x, unit_y) = possible.get_pos();
@@ -265,7 +260,7 @@ void draw_everything(std::vector<unit>& all,
     int draw_y=std::get<1>(primary)*map_height-camera_y;
     draw_maps_storage[primary].render(draw_x, draw_y);
     SDL_SetRenderDrawColor(grenderer, 0x00, 0x00, 0xFF, 0xFF);
-    for (unit i : all)
+    for (unit& i : all)
     {
 		int unit_x, unit_y;
 		std::tie(unit_x, unit_y) = i.get_pos();
@@ -323,12 +318,17 @@ void draw_everything(std::vector<unit>& all,
 //}
 //too far, free, reset? write to disk the vectormap? why didn't i just allow direct creation of texture from vectormaps.
 //threadpools?
+
 void prepare_the_maps(tuple_int& primary,
 	tuple_set& processed,
 	tuple_set& created,
 	tuple_triple_map& maps,
-	texture_storage& draw_maps_storage)
+	texture_storage& draw_maps_storage, 
+	std::unordered_map<tuple_int, std::vector<int>, boost::hash<tuple_int>>& bases,
+	std::unordered_map<tuple_int, std::unordered_map<tuple_int, char, boost::hash<tuple_int>>, boost::hash<tuple_int>>& seamlessness,
+	std::unordered_map<tuple_int, tuple_set, boost::hash<tuple_int>>& bound_coords)
 {
+	vectormap map;
 	std::vector<tuple_int> first_dirs = {
 		tuple_int(-1,0), tuple_int(1,0),
 		tuple_int(0,-1), tuple_int(0,1) };
@@ -336,11 +336,15 @@ void prepare_the_maps(tuple_int& primary,
 		tuple_int(-1,-1),tuple_int(-1,1),
 		tuple_int(1,-1), tuple_int(1,1)
 	};
+
 	if (processed.count(primary) == 0)
 	{
 		back_text temp(512, 512);
+		map = map_controller(std::get<0>(primary), std::get<1>(primary), map_width, map_height, maps, created, 
+			processed, bases, seamlessness, bound_coords);
+		big_map_storage[primary] = map;
 		draw_maps_storage.insert(std::make_pair(primary, temp));
-		draw_maps_storage[primary].load_background(primary, maps, created, processed);
+		draw_maps_storage[primary].load_background(primary, maps);
 	}
 	for (tuple_int dir : first_dirs)
 	{
@@ -349,8 +353,11 @@ void prepare_the_maps(tuple_int& primary,
 		if (processed.count(retrievin) == 0)
 		{
 			back_text temp(512, 512);
+			map = map_controller(std::get<0>(retrievin), std::get<1>(retrievin), map_width, map_height, maps, created, 
+				processed, bases, seamlessness, bound_coords);
+			big_map_storage[retrievin] = map;
 			draw_maps_storage.insert(std::make_pair(retrievin, temp));
-			draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
+			draw_maps_storage[retrievin].load_background(retrievin, maps);
 		}
 	}
 	for (tuple_int dir : second_dirs)
@@ -360,8 +367,11 @@ void prepare_the_maps(tuple_int& primary,
 		if (processed.count(retrievin) == 0)
 		{
 			back_text temp(512, 512);
+			map = map_controller(std::get<0>(retrievin), std::get<1>(retrievin), map_width, map_height, maps, created, 
+				processed, bases, seamlessness, bound_coords);
+			big_map_storage[retrievin] = map;
 			draw_maps_storage.insert(std::make_pair(retrievin, temp));
-			draw_maps_storage[retrievin].load_background(retrievin, maps, created, processed);
+			draw_maps_storage[retrievin].load_background(retrievin, maps);
 		}
 	}
 }
@@ -444,8 +454,15 @@ void draw(void)
     }
 }
 #endif
+void update(void)
+{
+
+}
 int main(int argc, char* argv[])
 {
+	//Updates per second-30 at max?
+	const int FPS = 30;
+	const int milliseconds_per_update = 1000 / FPS;
     if (!init(map_width,map_height))
     {
         std::cout<<"Failed to start \n";
@@ -463,16 +480,106 @@ int main(int argc, char* argv[])
                                       std::round(camera_y/512));
     tuple_triple_map maps;
     texture_storage draw_maps_storage;
+	tuple_set to_draw =
+	{
+		tuple_int(-1,-1),tuple_int(-1,0),tuple_int(-1,1),
+		tuple_int(0,-1),tuple_int(0,0),tuple_int(0,1),
+		tuple_int(1,-1),tuple_int(1,0),tuple_int(1,1)
+	};
+	std::unordered_map<tuple_int, std::unordered_map<tuple_int, char, boost::hash<tuple_int>>, boost::hash<tuple_int>> seamlessness;
+	std::unordered_map<tuple_int, std::vector<int>, boost::hash<tuple_int>> bases;
+	std::unordered_map<tuple_int, std::vector<std::pair<tuple_int, tuple_int>>, boost::hash<tuple_int>> bound_lines;
+	std::unordered_map<tuple_int, tuple_set, boost::hash<tuple_int>> bound_coords;
+	// have to convert all numbers to enums at some point
+	for (tuple_int dir : to_draw)
+	{
+		for (tuple_int initialize : to_draw)
+		{
+			if (initialize != tuple_int(0, 0))
+			{
+				seamlessness[dir][initialize] = 1;
+			}
+		}
+		if (dir == tuple_int(0, 0))
+		{
 
-
+		}
+		else
+		{
+			int start_x = 0;
+			int end_x = map_width;
+			int start_y = 0;
+			int end_y = map_height;
+			if (std::get<0>(dir) > 0)
+			{
+				start_x = 0;
+				end_x = map_width / 2;
+				seamlessness[dir][tuple_int(1, 0)] = 0;
+				seamlessness[dir][tuple_int(1, 1)] = 0;
+				seamlessness[dir][tuple_int(1, -1)] = 0;
+			}
+			else if (std::get<0>(dir) < 0)
+			{
+				start_x = map_width / 2;
+				end_x = map_width;
+				seamlessness[dir][tuple_int(-1, 0)] = 0;
+				seamlessness[dir][tuple_int(-1, 1)] = 0;
+				seamlessness[dir][tuple_int(-1, -1)] = 0;
+			}
+			if (std::get<1>(dir) > 0)
+			{
+				start_y = 0;
+				end_y = map_height / 2;
+				seamlessness[dir][tuple_int(0, 1)] = 0;
+				seamlessness[dir][tuple_int(1, 1)] = 0;
+				seamlessness[dir][tuple_int(-1, 1)] = 0;
+			}
+			else if (std::get<1>(dir)<0)
+			{
+				start_y = map_height / 2;
+				end_y = map_height;
+				seamlessness[dir][tuple_int(0, -1)] = 0;
+				seamlessness[dir][tuple_int(1, -1)] = 0;
+				seamlessness[dir][tuple_int(-1, -1)] = 0;
+			}
+			bases[dir] = {start_x, end_x, start_y, end_y, Wtr, Grs};
+			bound_lines[dir] = { std::make_pair(tuple_int(start_x, start_y), tuple_int(end_x, start_y)), 
+									std::make_pair(tuple_int(start_x, start_y), tuple_int(start_x, end_y)) };
+			for (int i = start_x; i < end_x; i++)
+			{
+				if (std::get<1>(dir) > 0)
+				{
+					bound_coords[dir].emplace(tuple_int(i, end_y));
+				}
+				else if (std::get<1>(dir) < 0)
+				{
+					bound_coords[dir].emplace(tuple_int(i, start_y));
+				}
+			}
+			for (int j = start_y; j < end_y; j++)
+			{
+				if (std::get<0>(dir) > 0)
+				{
+					bound_coords[dir].emplace(tuple_int(end_x, j));
+				}
+				else if (std::get<0>(dir) < 0)
+				{
+					bound_coords[dir].emplace(tuple_int(start_x, j));
+				}
+			}
+		}
+	}
     tuple_set processed;
     tuple_set created;
 	node_retrieval nodes;
 	tuple_set preprocessed_maps;
 
 	//Look into whether I need processed and preprocessed maps
-
-    prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
+	if (primary == tuple_int(0,0))
+	{
+		prepare_the_maps(primary, processed, created, maps, draw_maps_storage, bases, seamlessness, bound_coords);
+		//manually step2 for wraparound? bool? put it in seamlessness equivalent?
+	}
 
 	std::vector<int> basic = { 1,2,3,4,0 };
 
@@ -491,7 +598,7 @@ int main(int argc, char* argv[])
 		preprocessed_maps.emplace(primary);
 		std::unordered_map<tuple_int, vectormap, boost::hash<tuple_int>> map_set = cut(big_map_storage[primary], map_width, map_height, cut_size);
 		map_set_storage[primary] = map_set;
-		nodes = entrances(map_set, big_map_storage[primary], cut_size, false, 0, 0, map_width / cut_size, map_height / cut_size, possible_move_costs);
+		//nodes = entrances(map_set, big_map_storage[primary], cut_size, false, 0, 0, map_width / cut_size, map_height / cut_size, possible_move_costs);
 	}
 
 
@@ -511,8 +618,10 @@ int main(int argc, char* argv[])
 	int mouseposx, mouseposy;
     bool mousemovedwhiledown=false;
     SDL_Event e;
+	int done_time, start_time, time_elapsed;
     while (!quit)
     {
+		start_time = SDL_GetTicks();
 		while (SDL_PollEvent(&e) != 0)
         {
             SDL_RenderClear(grenderer);
@@ -535,7 +644,7 @@ int main(int argc, char* argv[])
 					case SDL_BUTTON_RIGHT:
 						//will never fire before finding out primary
 						SDL_GetMouseState(&mouseposx, &mouseposy);
-						for (unit acting : selected)
+						for (unit &acting : selected)
 						{
 							tuple_int destination = tuple_int(mouseposx + camera_x, mouseposy + camera_y);
 							int destination_map_x = (mouseposx + camera_x) / 512;
@@ -610,14 +719,24 @@ int main(int argc, char* argv[])
 						nodes = entrances(map_set, big_map_storage[primary], cut_size, false, 0, 0, map_width / cut_size, map_height / cut_size, possible_move_costs);
 					}
 
-
-                    prepare_the_maps(primary, processed, created, maps, draw_maps_storage);
-                    draw_everything(all, primary, draw_maps_storage);
+					/*
+					if (primary == tuple_int(0,0))
+					{
+						prepare_the_maps(primary, processed, created, maps, draw_maps_storage, );
+					}
+					*/
+					draw_everything(all, primary, draw_maps_storage);
                     SDL_RenderPresent(grenderer);
                     break;
             }
         }
-        SDL_Delay(10);
+		update();
+		done_time = SDL_GetTicks();
+		time_elapsed = done_time - start_time;
+		if (time_elapsed < milliseconds_per_update)
+		{
+			SDL_Delay(milliseconds_per_update - time_elapsed);
+		}
     }
 #endif
     return 0;

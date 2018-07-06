@@ -22,4 +22,7 @@ typedef std::vector<std::vector<int>> vectormap;
 typedef std::tuple<tuple_set,int> map_tuple;
 typedef std::unordered_map< std::tuple<int, int, int>, std::vector<tuple_set>, boost::hash<std::tuple<int, int, int>>> overflow_map;
 typedef std::unordered_map< std::tuple<int, int, int>, tuple_set, boost::hash<std::tuple<int, int, int>>> tuple_triple_map;
+
+enum Terrain { Grs, Fst, Msh, Mtn, Wtr };
+
 #endif /* typedef_hpp */

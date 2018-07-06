@@ -11,6 +11,7 @@
 
 void tuple_set_expand(tuple_set& in, tuple_int& coord);
 void tuple_set_remove(tuple_set& in, tuple_int& coord);
+void sized_tuple_set_expand(tuple_set& in, tuple_int& coord, int size);
 void snake_expand(tuple_set& in, tuple_int& coord, tuple_int& dir);
 std::tuple<int,int,int,int> det_bounds(const int& x_size,
                                        const int& y_size,
